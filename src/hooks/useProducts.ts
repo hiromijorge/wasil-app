@@ -23,6 +23,7 @@ function mapProduct(row: ProductRow & { stores?: { name: string } | null }): Pro
     description: row.description ?? fallback?.description,
     image: firstImage ? { uri: firstImage } : fallback?.image ?? null,
     imageName: firstImage ? "" : fallback?.imageName ?? "",
+    isDemo: row.is_demo ?? fallback?.isDemo ?? false,
   };
 }
 

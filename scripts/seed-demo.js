@@ -1,12 +1,15 @@
 /**
- * One-time demo seed script.
+ * Partner testing seed script.
  *
  * Run:
  *   node scripts/seed-demo.js
  *
  * It will read SUPABASE_SERVICE_ROLE_KEY from .env.local.
  *
- * Requires the schema migrations 0003-0006 to be applied first.
+ * Creates one test account per role and a sample store/products/orders so a
+ * partner can try every flow end-to-end.
+ *
+ * Requires all schema migrations (0003-0015) to be applied first.
  */
 
 const fs = require("fs");
@@ -50,12 +53,14 @@ const ASSETS_DIR = path.join(__dirname, "..", "assets", "web");
 const IMAGES_BUCKET = "marketplace-images";
 const RECEIPTS_BUCKET = "receipts";
 
+const PARTNER_PASSWORD = "wasilpartner2025";
+
 const demoUsers = {
-  customer: { email: "demo-customer@wasil.ye", password: "democustomer123", role: "customer", full_name: "Demo Customer" },
-  merchant: { email: "demo-merchant@wasil.ye", password: "demomerchant123", role: "merchant", full_name: "Demo Merchant" },
-  admin: { email: "demo-admin@wasil.ye", password: "demoadmin123", role: "admin", full_name: "Demo Admin" },
-  driver: { email: "demo-driver@wasil.ye", password: "demodriver123", role: "driver", full_name: "Demo Driver" },
-  partner: { email: "demo-partner@wasil.ye", password: "demopartner123", role: "partner", full_name: "Demo Partner" },
+  customer: { email: "partner-customer@wasil.ye", password: PARTNER_PASSWORD, role: "customer", full_name: "Partner Customer" },
+  merchant: { email: "partner-merchant@wasil.ye", password: PARTNER_PASSWORD, role: "merchant", full_name: "Partner Merchant" },
+  admin: { email: "partner-admin@wasil.ye", password: PARTNER_PASSWORD, role: "admin", full_name: "Partner Admin" },
+  driver: { email: "partner-driver@wasil.ye", password: PARTNER_PASSWORD, role: "driver", full_name: "Partner Driver" },
+  partner: { email: "partner-partner@wasil.ye", password: PARTNER_PASSWORD, role: "partner", full_name: "Partner Referrer" },
 };
 
 const storesSeed = [
@@ -75,7 +80,7 @@ const storesSeed = [
     lng: 44.191,
     delivery_radius_km: 20,
     delivery_fee: 5,
-    plan_id: "pro",
+    plan_id: "free",
   },
   {
     name: "Moda Fashion",
@@ -223,7 +228,7 @@ async function seed() {
     email: value.email,
     full_name: value.full_name,
     role: value.role,
-    referral_code: `${key.toUpperCase()}1234`,
+    referral_code: `${key.toUpperCase()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
     is_partner: value.role === "partner",
     referred_by: value.role === "merchant" ? userIds.partner : null,
   }));
@@ -275,6 +280,16 @@ async function seed() {
     console.log("Referral record already exists");
   }
 
+  // Remove any previously seeded demo stores so re-seeding stays idempotent
+  // even if the partner-merchant user was recreated and stores exist under a
+  // different owner_id.
+  const { error: deleteStoresError } = await supabase
+    .from("stores")
+    .delete()
+    .in("name", storesSeed.map((s) => s.name));
+  if (deleteStoresError) throw deleteStoresError;
+  console.log("Cleared existing demo stores");
+
   // Upload store images and insert stores
   const storeRows = [];
   for (const s of storesSeed) {
@@ -292,6 +307,7 @@ async function seed() {
       accent: s.accent,
       rating: s.rating,
       reviews: s.reviews,
+      is_demo: true,
       lat: s.lat,
       lng: s.lng,
       delivery_radius_km: s.delivery_radius_km,
@@ -323,6 +339,7 @@ async function seed() {
       price: p.price,
       description: p.description,
       images: [imageUrl],
+      is_demo: true,
     });
   }
 

@@ -2,9 +2,12 @@ import { useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
-import { palette, fonts, spacing, radii, shadows } from "../lib/theme";
-import { formatSAR, type Product } from "../lib/demo-data";
+import { CardPressable } from "./Card";
+import { palette, fonts, spacing, radii } from "../lib/theme";
+import { formatSAR } from "../lib/format";
+import { type Product } from "../lib/demo-data";
 import { useCart } from "../lib/cart-context";
+import { useTranslation } from "../lib/i18n";
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +15,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -23,7 +27,8 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Pressable
+    <CardPressable
+      overflowHidden
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       onPress={() => router.push(`/product/${product.id}`)}
     >
@@ -33,6 +38,11 @@ export function ProductCard({ product }: ProductCardProps) {
           style={styles.image}
           resizeMode="cover"
         />
+        {product.isDemo && (
+          <View style={styles.demoBadge}>
+            <Text style={styles.demoText}>{t("sample")}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.body}>
@@ -61,19 +71,13 @@ export function ProductCard({ product }: ProductCardProps) {
           </Pressable>
         </View>
       </View>
-    </Pressable>
+    </CardPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     width: "100%",
-    backgroundColor: palette.card,
-    borderRadius: radii["2xl"],
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    overflow: "hidden",
-    ...shadows.card,
   },
   pressed: {
     opacity: 0.96,
@@ -87,6 +91,20 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+  },
+  demoBadge: {
+    position: "absolute",
+    top: spacing.sm,
+    left: spacing.sm,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radii.full,
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  demoText: {
+    fontFamily: fonts.sansBold,
+    fontSize: 10,
+    color: "#fff",
   },
   body: {
     padding: spacing.sm,

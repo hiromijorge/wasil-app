@@ -4,7 +4,8 @@ import { useRouter } from "expo-router";
 import { AlertCircle } from "lucide-react-native";
 import { useAuth } from "../src/lib/auth-context";
 import { Button } from "../src/components/Button";
-import { palette, fonts, spacing, radii, shadows } from "../src/lib/theme";
+import { palette, fonts, spacing, radii } from "../src/lib/theme";
+import { Card } from "../src/components/Card";
 
 export default function IndexRedirect() {
   const router = useRouter();
@@ -13,14 +14,14 @@ export default function IndexRedirect() {
   useEffect(() => {
     if (!initialized) return;
 
-    if (role === "merchant") {
+    if (role === "partner") {
+      router.replace("/partner-dashboard");
+    } else if (role === "merchant") {
       router.replace("/merchant-dashboard");
     } else if (role === "admin") {
       router.replace("/admin-dashboard");
     } else if (role === "driver") {
-      router.replace("/driver-dashboard");
-    } else if (role === "partner") {
-      router.replace("/partner-dashboard");
+      router.replace("/dashboard");
     } else {
       router.replace("/(tabs)");
     }
@@ -39,7 +40,7 @@ export default function IndexRedirect() {
   if (hasProfileProblem) {
     return (
       <View style={styles.container}>
-        <View style={[styles.card, shadows.card]}>
+        <Card padding="lg" style={styles.card}>
           <View style={styles.iconCircle}>
             <AlertCircle size={32} color={palette.destructive} />
           </View>
@@ -64,7 +65,7 @@ export default function IndexRedirect() {
               style={styles.actionButton}
             />
           </View>
-        </View>
+        </Card>
       </View>
     );
   }
@@ -88,12 +89,7 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: palette.card,
-    borderRadius: radii["2xl"],
-    padding: spacing.xl,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: palette.border,
   },
   iconCircle: {
     width: 64,

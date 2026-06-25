@@ -3,6 +3,13 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth-context";
 import type { Database } from "../lib/database.types";
 import type { CartItem } from "../lib/cart-context";
+import type { GeoLocation } from "../components/LocationButton";
+
+export type DeliveryDetails = {
+  contactName?: string;
+  buildingFloor?: string;
+  notes?: string;
+};
 
 export type CreateOrderInput = {
   storeId: string;
@@ -12,7 +19,10 @@ export type CreateOrderInput = {
   subtotalSar: number;
   phone: string;
   address?: string;
+  deliveryLocation?: GeoLocation | null;
+  deliveryDetails?: DeliveryDetails;
   notes?: string;
+  paymentMethod?: "bank_transfer" | "cash";
 };
 
 type OrderInsert = Database["public"]["Tables"]["orders"]["Insert"];
@@ -96,7 +106,25 @@ export function useCreateOrder() {
           items: itemsJson,
           phone: input.phone,
           address: input.address ?? null,
+          delivery_location: input.deliveryLocation
+            ? {
+                address: input.deliveryLocation.address,
+                lat: input.deliveryLocation.lat,
+                lng: input.deliveryLocation.lng,
+              }
+            : null,
+          delivery_details: input.deliveryDetails
+            ? {
+                contact_name: input.deliveryDetails.contactName ?? null,
+                building_floor: input.deliveryDetails.buildingFloor ?? null,
+                notes: input.deliveryDetails.notes ?? null,
+              }
+            : null,
           notes: input.notes ?? null,
+          payment_method:
+            input.deliveryType === "pickup"
+              ? "bank_transfer"
+              : (input.paymentMethod ?? "bank_transfer"),
         };
 
         const { error: insertError } = await supabase

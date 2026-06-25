@@ -17,6 +17,21 @@ export interface Database {
           minimum_commission_sar: number;
           partner_commission_percent: number;
           updated_at: string;
+          parcel_base_fare_sar: number;
+          parcel_per_km_rate_sar: number;
+          parcel_per_kg_rate_sar: number;
+          parcel_volumetric_divisor: number;
+          minimum_parcel_fare_sar: number;
+          parcel_bike_multiplier: number;
+          parcel_car_multiplier: number;
+          parcel_van_multiplier: number;
+          min_partner_payout_sar: number;
+          min_merchant_payout_sar: number;
+          min_driver_payout_sar: number;
+          cod_weekly_settlement_days: number;
+          cod_max_unsettled_cash_sar: number;
+          cod_high_value_threshold_sar: number;
+          parcel_driver_fee_percent: number;
         };
         Insert: {
           id?: number;
@@ -25,6 +40,21 @@ export interface Database {
           minimum_commission_sar?: number;
           partner_commission_percent?: number;
           updated_at?: string;
+          parcel_base_fare_sar?: number;
+          parcel_per_km_rate_sar?: number;
+          parcel_per_kg_rate_sar?: number;
+          parcel_volumetric_divisor?: number;
+          minimum_parcel_fare_sar?: number;
+          parcel_bike_multiplier?: number;
+          parcel_car_multiplier?: number;
+          parcel_van_multiplier?: number;
+          min_partner_payout_sar?: number;
+          min_merchant_payout_sar?: number;
+          min_driver_payout_sar?: number;
+          cod_weekly_settlement_days?: number;
+          cod_max_unsettled_cash_sar?: number;
+          cod_high_value_threshold_sar?: number;
+          parcel_driver_fee_percent?: number;
         };
         Update: {
           id?: number;
@@ -33,6 +63,21 @@ export interface Database {
           minimum_commission_sar?: number;
           partner_commission_percent?: number;
           updated_at?: string;
+          parcel_base_fare_sar?: number;
+          parcel_per_km_rate_sar?: number;
+          parcel_per_kg_rate_sar?: number;
+          parcel_volumetric_divisor?: number;
+          minimum_parcel_fare_sar?: number;
+          parcel_bike_multiplier?: number;
+          parcel_car_multiplier?: number;
+          parcel_van_multiplier?: number;
+          min_partner_payout_sar?: number;
+          min_merchant_payout_sar?: number;
+          min_driver_payout_sar?: number;
+          cod_weekly_settlement_days?: number;
+          cod_max_unsettled_cash_sar?: number;
+          cod_high_value_threshold_sar?: number;
+          parcel_driver_fee_percent?: number;
         };
       };
       profiles: {
@@ -46,6 +91,9 @@ export interface Database {
           referral_code: string | null;
           referred_by: string | null;
           is_partner: boolean;
+          push_token: string | null;
+          language: string | null;
+          payout_details: import("./database.types").Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -59,6 +107,9 @@ export interface Database {
           referral_code?: string | null;
           referred_by?: string | null;
           is_partner?: boolean;
+          push_token?: string | null;
+          language?: string | null;
+          payout_details?: import("./database.types").Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -72,6 +123,53 @@ export interface Database {
           referral_code?: string | null;
           referred_by?: string | null;
           is_partner?: boolean;
+          push_token?: string | null;
+          language?: string | null;
+          payout_details?: import("./database.types").Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      addresses: {
+        Row: {
+          id: string;
+          user_id: string;
+          label: string;
+          address: string;
+          lat: number | null;
+          lng: number | null;
+          building_floor: string | null;
+          contact_name: string | null;
+          contact_phone: string | null;
+          is_default: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          label?: string;
+          address: string;
+          lat?: number | null;
+          lng?: number | null;
+          building_floor?: string | null;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          is_default?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          label?: string;
+          address?: string;
+          lat?: number | null;
+          lng?: number | null;
+          building_floor?: string | null;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          is_default?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -132,6 +230,7 @@ export interface Database {
           accent: string | null;
           rating: number;
           reviews: number;
+          is_demo: boolean;
           lat: number;
           lng: number;
           delivery_radius_km: number;
@@ -157,6 +256,7 @@ export interface Database {
           accent?: string | null;
           rating?: number;
           reviews?: number;
+          is_demo?: boolean;
           lat?: number;
           lng?: number;
           delivery_radius_km?: number;
@@ -183,6 +283,7 @@ export interface Database {
           accent?: string | null;
           rating?: number;
           reviews?: number;
+          is_demo?: boolean;
           lat?: number;
           lng?: number;
           delivery_radius_km?: number;
@@ -204,6 +305,7 @@ export interface Database {
           price: number;
           description: string | null;
           images: Json;
+          is_demo: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -214,6 +316,7 @@ export interface Database {
           price: number;
           description?: string | null;
           images?: Json;
+          is_demo?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -224,6 +327,7 @@ export interface Database {
           price?: number;
           description?: string | null;
           images?: Json;
+          is_demo?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -252,12 +356,19 @@ export interface Database {
           distance_km: number | null;
           items: Json;
           address: string | null;
+          delivery_location: Json | null;
+          delivery_details: Json | null;
           phone: string | null;
           notes: string | null;
+          payment_method: "bank_transfer" | "cash";
           customer_payment_status: "pending" | "verified" | "rejected";
           payment_receipt_url: string | null;
           payment_verified_at: string | null;
           payment_verified_by: string | null;
+          cash_collected_sar: number | null;
+          cash_collected_at: string | null;
+          cash_collected_by: string | null;
+          cash_receipt_photo_url: string | null;
           subtotal_sar: number;
           commission_sar: number;
           delivery_fee_sar: number;
@@ -271,6 +382,12 @@ export interface Database {
           dispute_photo_url: string | null;
           dispute_resolved_at: string | null;
           dispute_resolution: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          cancellation_reason: string | null;
+          refund_status: "pending" | "processing" | "completed" | "failed" | null;
+          refund_amount_sar: number | null;
+          refund_notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -297,12 +414,19 @@ export interface Database {
           distance_km?: number | null;
           items?: Json;
           address?: string | null;
+          delivery_location?: Json | null;
+          delivery_details?: Json | null;
           phone?: string | null;
           notes?: string | null;
+          payment_method?: "bank_transfer" | "cash";
           customer_payment_status?: "pending" | "verified" | "rejected";
           payment_receipt_url?: string | null;
           payment_verified_at?: string | null;
           payment_verified_by?: string | null;
+          cash_collected_sar?: number | null;
+          cash_collected_at?: string | null;
+          cash_collected_by?: string | null;
+          cash_receipt_photo_url?: string | null;
           subtotal_sar?: number;
           commission_sar?: number;
           delivery_fee_sar?: number;
@@ -316,6 +440,12 @@ export interface Database {
           dispute_photo_url?: string | null;
           dispute_resolved_at?: string | null;
           dispute_resolution?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          cancellation_reason?: string | null;
+          refund_status?: "pending" | "processing" | "completed" | "failed" | null;
+          refund_amount_sar?: number | null;
+          refund_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -342,12 +472,19 @@ export interface Database {
           distance_km?: number | null;
           items?: Json;
           address?: string | null;
+          delivery_location?: Json | null;
+          delivery_details?: Json | null;
           phone?: string | null;
           notes?: string | null;
+          payment_method?: "bank_transfer" | "cash";
           customer_payment_status?: "pending" | "verified" | "rejected";
           payment_receipt_url?: string | null;
           payment_verified_at?: string | null;
           payment_verified_by?: string | null;
+          cash_collected_sar?: number | null;
+          cash_collected_at?: string | null;
+          cash_collected_by?: string | null;
+          cash_receipt_photo_url?: string | null;
           subtotal_sar?: number;
           commission_sar?: number;
           delivery_fee_sar?: number;
@@ -361,6 +498,12 @@ export interface Database {
           dispute_photo_url?: string | null;
           dispute_resolved_at?: string | null;
           dispute_resolution?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          cancellation_reason?: string | null;
+          refund_status?: "pending" | "processing" | "completed" | "failed" | null;
+          refund_amount_sar?: number | null;
+          refund_notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -561,6 +704,7 @@ export interface Database {
           source_type: string;
           status: "pending" | "approved" | "paid";
           paid_at: string | null;
+          partner_payout_request_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -571,6 +715,7 @@ export interface Database {
           source_type?: string;
           status?: "pending" | "approved" | "paid";
           paid_at?: string | null;
+          partner_payout_request_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -581,7 +726,187 @@ export interface Database {
           source_type?: string;
           status?: "pending" | "approved" | "paid";
           paid_at?: string | null;
+          partner_payout_request_id?: string | null;
           created_at?: string;
+        };
+      };
+      partner_payout_requests: {
+        Row: {
+          id: string;
+          partner_id: string;
+          amount_sar: number;
+          status: "pending" | "approved" | "rejected" | "paid";
+          payment_method: string | null;
+          payment_details: import("./database.types").Json | null;
+          notes: string | null;
+          requested_at: string;
+          processed_at: string | null;
+          processed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          partner_id: string;
+          amount_sar: number;
+          status?: "pending" | "approved" | "rejected" | "paid";
+          payment_method?: string | null;
+          payment_details?: import("./database.types").Json | null;
+          notes?: string | null;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          partner_id?: string;
+          amount_sar?: number;
+          status?: "pending" | "approved" | "rejected" | "paid";
+          payment_method?: string | null;
+          payment_details?: import("./database.types").Json | null;
+          notes?: string | null;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      merchant_payout_requests: {
+        Row: {
+          id: string;
+          merchant_id: string;
+          store_id: string | null;
+          amount_sar: number;
+          status: "pending" | "approved" | "rejected" | "paid";
+          payment_method: string;
+          payment_details: import("./database.types").Json | null;
+          notes: string | null;
+          requested_at: string;
+          processed_at: string | null;
+          processed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          merchant_id: string;
+          store_id?: string | null;
+          amount_sar: number;
+          status?: "pending" | "approved" | "rejected" | "paid";
+          payment_method?: string;
+          payment_details?: import("./database.types").Json | null;
+          notes?: string | null;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          merchant_id?: string;
+          store_id?: string | null;
+          amount_sar?: number;
+          status?: "pending" | "approved" | "rejected" | "paid";
+          payment_method?: string;
+          payment_details?: import("./database.types").Json | null;
+          notes?: string | null;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      driver_payout_requests: {
+        Row: {
+          id: string;
+          driver_id: string;
+          amount_sar: number;
+          status: "pending" | "approved" | "rejected" | "paid";
+          payment_method: string;
+          payment_details: import("./database.types").Json | null;
+          notes: string | null;
+          requested_at: string;
+          processed_at: string | null;
+          processed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          driver_id: string;
+          amount_sar: number;
+          status?: "pending" | "approved" | "rejected" | "paid";
+          payment_method?: string;
+          payment_details?: import("./database.types").Json | null;
+          notes?: string | null;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          driver_id?: string;
+          amount_sar?: number;
+          status?: "pending" | "approved" | "rejected" | "paid";
+          payment_method?: string;
+          payment_details?: import("./database.types").Json | null;
+          notes?: string | null;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      driver_cash_settlements: {
+        Row: {
+          id: string;
+          driver_id: string;
+          period_start: string;
+          period_end: string;
+          cash_collected_sar: number;
+          driver_fee_sar: number;
+          remitted_sar: number;
+          status: "pending" | "settled";
+          settled_at: string | null;
+          settled_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          driver_id: string;
+          period_start: string;
+          period_end: string;
+          cash_collected_sar?: number;
+          driver_fee_sar?: number;
+          remitted_sar?: number;
+          status?: "pending" | "settled";
+          settled_at?: string | null;
+          settled_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          driver_id?: string;
+          period_start?: string;
+          period_end?: string;
+          cash_collected_sar?: number;
+          driver_fee_sar?: number;
+          remitted_sar?: number;
+          status?: "pending" | "settled";
+          settled_at?: string | null;
+          settled_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       payouts: {
@@ -629,6 +954,41 @@ export interface Database {
           released_at?: string | null;
           released_by?: string | null;
           created_at?: string;
+        };
+      };
+      reviews: {
+        Row: {
+          id: string;
+          order_id: string;
+          store_id: string;
+          customer_id: string;
+          product_id: string | null;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          store_id: string;
+          customer_id: string;
+          product_id?: string | null;
+          rating: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          store_id?: string;
+          customer_id?: string;
+          product_id?: string | null;
+          rating?: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       drivers: {
@@ -740,6 +1100,7 @@ export interface Database {
           distance_km: number | null;
           pickup_location: Json;
           delivery_location: Json;
+          delivery_details: Json | null;
           proof_photo_url: string | null;
           customer_name: string | null;
           customer_phone: string | null;
@@ -762,6 +1123,7 @@ export interface Database {
           distance_km?: number | null;
           pickup_location?: Json;
           delivery_location?: Json;
+          delivery_details?: Json | null;
           proof_photo_url?: string | null;
           customer_name?: string | null;
           customer_phone?: string | null;
@@ -784,6 +1146,7 @@ export interface Database {
           distance_km?: number | null;
           pickup_location?: Json;
           delivery_location?: Json;
+          delivery_details?: Json | null;
           proof_photo_url?: string | null;
           customer_name?: string | null;
           customer_phone?: string | null;
@@ -803,24 +1166,40 @@ export interface Database {
           driver_id: string | null;
           pickup_location: Json;
           dropoff_location: Json;
+          pickup_details: Json | null;
+          dropoff_details: Json | null;
           receiver_name: string;
           receiver_phone: string;
           item_description: string;
           item_category: string | null;
           weight_kg: number | null;
           fare_sar: number;
+          driver_fee_sar: number;
           status: "pending" | "accepted" | "picked_up" | "on_the_way" | "delivered" | "cancelled";
           payment_status: "pending" | "verified" | "rejected";
+          payment_method: "bank_transfer" | "cash";
+          cash_payer: string | null;
           payment_receipt_url: string | null;
           pickup_photo_url: string | null;
           delivery_proof_url: string | null;
           notes: string | null;
+          cash_collected_sar: number | null;
+          cash_collected_at: string | null;
+          cash_collected_by: string | null;
+          cash_receipt_photo_url: string | null;
           accepted_at: string | null;
           picked_up_at: string | null;
           on_the_way_at: string | null;
           delivered_at: string | null;
           created_at: string;
           updated_at: string;
+          distance_km: number | null;
+          vehicle_type: string | null;
+          length_cm: number | null;
+          width_cm: number | null;
+          height_cm: number | null;
+          volumetric_weight_kg: number | null;
+          fare_breakdown: Json | null;
         };
         Insert: {
           id?: string;
@@ -828,24 +1207,40 @@ export interface Database {
           driver_id?: string | null;
           pickup_location?: import("./database.types").Json;
           dropoff_location?: import("./database.types").Json;
+          pickup_details?: import("./database.types").Json | null;
+          dropoff_details?: import("./database.types").Json | null;
           receiver_name?: string;
           receiver_phone?: string;
           item_description?: string;
           item_category?: string | null;
           weight_kg?: number | null;
           fare_sar?: number;
+          driver_fee_sar?: number;
           status?: "pending" | "accepted" | "picked_up" | "on_the_way" | "delivered" | "cancelled";
           payment_status?: "pending" | "verified" | "rejected";
+          payment_method?: "bank_transfer" | "cash";
+          cash_payer?: string | null;
           payment_receipt_url?: string | null;
           pickup_photo_url?: string | null;
           delivery_proof_url?: string | null;
           notes?: string | null;
+          cash_collected_sar?: number | null;
+          cash_collected_at?: string | null;
+          cash_collected_by?: string | null;
+          cash_receipt_photo_url?: string | null;
           accepted_at?: string | null;
           picked_up_at?: string | null;
           on_the_way_at?: string | null;
           delivered_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          distance_km?: number | null;
+          vehicle_type?: string | null;
+          length_cm?: number | null;
+          width_cm?: number | null;
+          height_cm?: number | null;
+          volumetric_weight_kg?: number | null;
+          fare_breakdown?: import("./database.types").Json | null;
         };
         Update: {
           id?: string;
@@ -853,24 +1248,40 @@ export interface Database {
           driver_id?: string | null;
           pickup_location?: import("./database.types").Json;
           dropoff_location?: import("./database.types").Json;
+          pickup_details?: import("./database.types").Json | null;
+          dropoff_details?: import("./database.types").Json | null;
           receiver_name?: string;
           receiver_phone?: string;
           item_description?: string;
           item_category?: string | null;
           weight_kg?: number | null;
           fare_sar?: number;
+          driver_fee_sar?: number;
           status?: "pending" | "accepted" | "picked_up" | "on_the_way" | "delivered" | "cancelled";
           payment_status?: "pending" | "verified" | "rejected";
+          payment_method?: "bank_transfer" | "cash";
+          cash_payer?: string | null;
           payment_receipt_url?: string | null;
           pickup_photo_url?: string | null;
           delivery_proof_url?: string | null;
           notes?: string | null;
+          cash_collected_sar?: number | null;
+          cash_collected_at?: string | null;
+          cash_collected_by?: string | null;
+          cash_receipt_photo_url?: string | null;
           accepted_at?: string | null;
           picked_up_at?: string | null;
           on_the_way_at?: string | null;
           delivered_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          distance_km?: number | null;
+          vehicle_type?: string | null;
+          length_cm?: number | null;
+          width_cm?: number | null;
+          height_cm?: number | null;
+          volumetric_weight_kg?: number | null;
+          fare_breakdown?: import("./database.types").Json | null;
         };
       };
       messages: {
@@ -907,7 +1318,87 @@ export interface Database {
       };
     };
     Views: {};
-    Functions: {};
+    Functions: {
+      merchant_available_balance: {
+        Args: { p_merchant_id: string };
+        Returns: number;
+      };
+      driver_available_balance: {
+        Args: { p_driver_id: string };
+        Returns: number;
+      };
+      driver_unsettled_cod_balance: {
+        Args: { p_driver_id: string };
+        Returns: number;
+      };
+      driver_cod_collected_sar: {
+        Args: { p_driver_id: string };
+        Returns: number;
+      };
+      driver_cod_fee_sar: {
+        Args: { p_driver_id: string };
+        Returns: number;
+      };
+      request_merchant_payout: {
+        Args: {
+          p_merchant_id: string;
+          p_amount_sar: number;
+          p_payment_method?: string;
+          p_payment_details?: import("./database.types").Json;
+          p_store_id?: string;
+        };
+        Returns: string;
+      };
+      request_driver_payout: {
+        Args: {
+          p_driver_id: string;
+          p_amount_sar: number;
+          p_payment_method?: string;
+          p_payment_details?: import("./database.types").Json;
+        };
+        Returns: string;
+      };
+      process_merchant_payout: {
+        Args: {
+          p_request_id: string;
+          p_status: string;
+          p_processed_by: string;
+          p_notes?: string;
+        };
+        Returns: undefined;
+      };
+      process_driver_payout: {
+        Args: {
+          p_request_id: string;
+          p_status: string;
+          p_processed_by: string;
+          p_notes?: string;
+        };
+        Returns: undefined;
+      };
+      partner_available_balance: {
+        Args: { p_partner_id: string };
+        Returns: number;
+      };
+      request_partner_payout: {
+        Args: {
+          p_partner_id: string;
+          p_amount_sar: number;
+          p_payment_method?: string;
+          p_payment_details?: import("./database.types").Json;
+        };
+        Returns: string;
+      };
+      process_partner_payout: {
+        Args: {
+          p_request_id: string;
+          p_status: string;
+          p_processed_by: string;
+          p_notes?: string;
+        };
+        Returns: undefined;
+      };
+    };
     Enums: {};
   };
 }

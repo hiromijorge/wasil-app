@@ -18,11 +18,12 @@ import { useMerchantStore } from "../../src/hooks/useMerchantStore";
 import { useAuth } from "../../src/lib/auth-context";
 import { useTranslation } from "../../src/lib/i18n";
 import { supabase } from "../../src/lib/supabase";
+import { RoleGuard } from "../../src/components/RoleGuard";
 import type { Database } from "../../src/lib/database.types";
 
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
 
-export default function MerchantChatScreen() {
+function MerchantChatScreen() {
   const { customerId } = useLocalSearchParams<{ customerId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -337,3 +338,11 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
+
+export default function MerchantChatScreenWrapped() {
+  return (
+    <RoleGuard allowedRoles="merchant">
+      <MerchantChatScreen />
+    </RoleGuard>
+  );
+}

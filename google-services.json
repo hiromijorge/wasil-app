@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "450371909357",
+    "project_id": "wasil-c2971",
+    "storage_bucket": "wasil-c2971.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:450371909357:android:72d4416d7ed42d1bd8fee4",
+        "android_client_info": {
+          "package_name": "com.wasil.yemen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGUpquPhzYFq-5drC7SqwRAUZdSMNB_qc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

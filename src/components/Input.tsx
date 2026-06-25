@@ -12,10 +12,11 @@ interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   icon?: React.ReactNode;
+  rightElement?: React.ReactNode;
 }
 
 export const Input = forwardRef<TextInput, InputProps>(
-  ({ label, error, icon, style, ...props }, ref) => {
+  ({ label, error, icon, rightElement, style, ...props }, ref) => {
     const [focused, setFocused] = useState(false);
 
     return (
@@ -32,7 +33,12 @@ export const Input = forwardRef<TextInput, InputProps>(
           <TextInput
             ref={ref}
             placeholderTextColor={palette.mutedForeground}
-            style={[styles.input, icon ? styles.inputWithIcon : undefined, style]}
+            style={[
+              styles.input,
+              icon ? styles.inputWithIcon : undefined,
+              rightElement ? styles.inputWithRightElement : undefined,
+              style,
+            ]}
             onFocus={(e) => {
               setFocused(true);
               props.onFocus?.(e);
@@ -43,6 +49,9 @@ export const Input = forwardRef<TextInput, InputProps>(
             }}
             {...props}
           />
+          {rightElement && (
+            <View style={styles.rightElement}>{rightElement}</View>
+          )}
         </View>
         {error && <Text style={styles.error}>{error}</Text>}
       </View>
@@ -85,8 +94,14 @@ const styles = StyleSheet.create({
   inputWithIcon: {
     marginLeft: 10,
   },
+  inputWithRightElement: {
+    marginRight: 4,
+  },
   icon: {
     opacity: 0.6,
+  },
+  rightElement: {
+    marginLeft: 8,
   },
   errorBorder: {
     borderColor: palette.destructive,

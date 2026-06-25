@@ -19,7 +19,7 @@ export function useDriverParcels(driverId?: string) {
       .from("parcel_deliveries")
       .select("*")
       .or(
-        `driver_id.eq.${driverId},and(driver_id.is.null,status.eq.pending,payment_status.eq.verified)`
+        `driver_id.eq.${driverId},and(driver_id.is.null,status.eq.pending,or(payment_status.eq.verified,payment_method.eq.cash))`
       )
       .order("created_at", { ascending: false });
 

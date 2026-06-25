@@ -8,6 +8,8 @@ import {
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { registerForPushNotificationsAsync, savePushToken } from "./notifications";
+import { useLang, type Lang } from "./i18n";
 import type { Database } from "./database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -37,12 +39,18 @@ interface AuthState {
     password: string;
   }) => Promise<{ error?: Error }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error?: Error }>;
+  updatePassword: (password: string) => Promise<{ error?: Error }>;
+  sendPhoneOtp: (phone: string) => Promise<{ error?: Error }>;
+  verifyPhoneOtp: (phone: string, token: string) => Promise<{ error?: Error }>;
   refreshProfile: () => Promise<void>;
+  updateProfile: (updates: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>) => Promise<{ error?: Error }>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { lang, setLang } = useLang();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -65,6 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         referral_code: "WASIL1234",
         referred_by: null,
         is_partner: false,
+        push_token: null,
+        language: lang,
+        payout_details: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
@@ -92,7 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfileError(null);
     setProfile(data);
     setRole(data.role);
-  }, []);
+    if (data.language === "ar" || data.language === "en") {
+      setLang(data.language);
+    }
+  }, [setLang]);
 
   const refreshProfile = useCallback(async () => {
     if (user?.id) {
@@ -100,6 +114,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetchProfile(user.id);
     }
   }, [fetchProfile, user?.id]);
+
+  const updateProfile = useCallback(
+    async (updates: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>) => {
+      if (!user?.id) return { error: new Error("Not authenticated") };
+      if (isDemo) {
+        setProfile((prev) => (prev ? { ...prev, ...updates, updated_at: new Date().toISOString() } : null));
+        return {};
+      }
+      const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+      if (error) return { error };
+      await fetchProfile(user.id);
+      return {};
+    },
+    [fetchProfile, user?.id, isDemo],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -147,6 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchProfile]);
 
+  useEffect(() => {
+    if (!user?.id || isDemo) return;
+    registerForPushNotificationsAsync().then((token) => {
+      if (token) savePushToken(user.id, token);
+    });
+  }, [user?.id, isDemo]);
+
   const signIn = useCallback(
     async (input: { method: "phone" | "email"; value: string; password: string }) => {
       try {
@@ -193,6 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             password: input.password,
             options: {
               data: { ...baseMetadata, phone: null },
+              emailRedirectTo: "wasil://verify-email",
             },
           });
           if (error) return { error };
@@ -204,6 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               full_name: input.fullName,
               role: input.role,
               referral_code: generateReferralCode(input.fullName),
+              language: lang,
             });
           }
         } else {
@@ -223,6 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               full_name: input.fullName,
               role: input.role,
               referral_code: generateReferralCode(input.fullName),
+              language: lang,
             });
           }
         }
@@ -238,6 +277,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     setDemoRole(null);
     await supabase.auth.signOut();
+  }, []);
+
+  const resetPassword = useCallback(async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "wasil://reset-password",
+      });
+      return { error: error ?? undefined };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  }, []);
+
+  const updatePassword = useCallback(async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      return { error: error ?? undefined };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  }, []);
+
+  const sendPhoneOtp = useCallback(async (phone: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone });
+      return { error: error ?? undefined };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  }, []);
+
+  const verifyPhoneOtp = useCallback(async (phone: string, token: string) => {
+    try {
+      const { error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
+      return { error: error ?? undefined };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
   }, []);
 
   const enableDemo = useCallback((selectedRole: Role) => {
@@ -259,7 +336,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signOut,
+        resetPassword,
+        updatePassword,
+        sendPhoneOtp,
+        verifyPhoneOtp,
         refreshProfile,
+        updateProfile,
       }}
     >
       {children}

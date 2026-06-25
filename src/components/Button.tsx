@@ -7,7 +7,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from "react-native";
-import { palette, fonts, radii } from "../lib/theme";
+import { palette, fonts, radii, shadows } from "../lib/theme";
 
 interface ButtonProps extends PressableProps {
   title: string;
@@ -79,13 +79,7 @@ const styles = StyleSheet.create({
   },
   default: {
     backgroundColor: palette.primary,
-    ...{
-      shadowColor: "#233338",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 2,
-      elevation: 2,
-    },
+    ...shadows.card,
   },
   destructive: {
     backgroundColor: palette.destructive,
@@ -107,6 +101,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     height: "auto",
     minHeight: 0,
+    borderRadius: 0,
   },
   defaultText: {
     color: palette.primaryForeground,
@@ -118,7 +113,7 @@ const styles = StyleSheet.create({
     color: palette.secondaryForeground,
   },
   outlineText: {
-    color: palette.foreground,
+    color: palette.primary,
   },
   ghostText: {
     color: palette.foreground,
@@ -129,23 +124,28 @@ const styles = StyleSheet.create({
     textDecorationColor: palette.primary,
   },
   defaultSize: {
-    height: 36,
-    paddingHorizontal: 16,
+    minHeight: 48,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: radii.full,
   },
   sm: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: radii.md,
+    minHeight: 40,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: radii.full,
   },
   lg: {
-    height: 40,
+    minHeight: 56,
+    paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: radii.md,
+    borderRadius: radii.full,
   },
   icon: {
-    width: 36,
-    height: 36,
+    width: 48,
+    height: 48,
     paddingHorizontal: 0,
+    borderRadius: radii.full,
   },
   text: {
     fontFamily: fonts.sansSemiBold,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   lgText: {
-    fontSize: 14,
+    fontSize: 16,
   },
   iconText: {
     fontSize: 14,

@@ -23,6 +23,7 @@ function mapStore(row: StoreRow): Store {
     accent: row.accent ?? fallback?.accent ?? "#005b57",
     rating: row.rating ?? fallback?.rating ?? 0,
     reviews: row.reviews ?? fallback?.reviews ?? 0,
+    isDemo: row.is_demo ?? fallback?.isDemo ?? false,
     lat: row.lat ?? fallback?.lat ?? 0,
     lng: row.lng ?? fallback?.lng ?? 0,
     deliveryRadiusKm: row.delivery_radius_km ?? fallback?.deliveryRadiusKm ?? 0,

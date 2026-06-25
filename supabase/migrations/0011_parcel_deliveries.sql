@@ -33,9 +33,30 @@ CREATE INDEX IF NOT EXISTS idx_parcel_deliveries_status ON public.parcel_deliver
 CREATE INDEX IF NOT EXISTS idx_parcel_deliveries_payment_status ON public.parcel_deliveries(payment_status);
 
 -- Trigger to auto-update updated_at
+DROP TRIGGER IF EXISTS update_parcel_deliveries_updated_at ON public.parcel_deliveries;
 CREATE TRIGGER update_parcel_deliveries_updated_at
   BEFORE UPDATE ON public.parcel_deliveries
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Trigger to set sender_id from auth.uid() if the client didn't send it
+CREATE OR REPLACE FUNCTION public.set_parcel_sender_id()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.sender_id IS NULL THEN
+    NEW.sender_id := auth.uid();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS set_parcel_sender_id_trigger ON public.parcel_deliveries;
+CREATE TRIGGER set_parcel_sender_id_trigger
+  BEFORE INSERT ON public.parcel_deliveries
+  FOR EACH ROW EXECUTE FUNCTION public.set_parcel_sender_id();
 
 -- RLS
 ALTER TABLE public.parcel_deliveries ENABLE ROW LEVEL SECURITY;
@@ -60,7 +81,7 @@ CREATE POLICY "Drivers can view available parcels"
       WHERE drivers.id = parcel_deliveries.driver_id
         AND drivers.user_id = auth.uid()
     )
-    OR auth.uid() IN (SELECT user_id FROM public.profiles WHERE role = 'admin')
+    OR public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Drivers can update assigned parcels" ON public.parcel_deliveries;
@@ -73,7 +94,7 @@ CREATE POLICY "Drivers can update assigned parcels"
         AND drivers.user_id = auth.uid()
     )
     OR (driver_id IS NULL AND status = 'pending' AND payment_status = 'verified')
-    OR auth.uid() IN (SELECT user_id FROM public.profiles WHERE role = 'admin')
+    OR public.is_admin()
   )
   WITH CHECK (
     EXISTS (
@@ -81,11 +102,11 @@ CREATE POLICY "Drivers can update assigned parcels"
       WHERE drivers.id = parcel_deliveries.driver_id
         AND drivers.user_id = auth.uid()
     )
-    OR auth.uid() IN (SELECT user_id FROM public.profiles WHERE role = 'admin')
+    OR public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can manage parcels" ON public.parcel_deliveries;
 CREATE POLICY "Admins can manage parcels"
   ON public.parcel_deliveries FOR ALL TO authenticated
-  USING (auth.uid() IN (SELECT user_id FROM public.profiles WHERE role = 'admin'))
-  WITH CHECK (auth.uid() IN (SELECT user_id FROM public.profiles WHERE role = 'admin'));
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());

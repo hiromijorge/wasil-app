@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth-context";
 import type { Database } from "../lib/database.types";
 
-type ParcelRow = Database["public"]["Tables"]["parcel_deliveries"]["Row"];
+export type ParcelRow = Database["public"]["Tables"]["parcel_deliveries"]["Row"];
 
 export function useCustomerParcels() {
   const { user } = useAuth();

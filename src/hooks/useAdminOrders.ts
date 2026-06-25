@@ -22,6 +22,7 @@ export function useAdminOrders() {
         .from("orders")
         .select("*, store:stores(name)")
         .eq("customer_payment_status", "pending")
+        .neq("payment_method", "cash")
         .order("created_at", { ascending: false });
 
       if (supaError) throw supaError;

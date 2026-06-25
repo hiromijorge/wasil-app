@@ -14,6 +14,7 @@ import { Search, ChevronRight, RotateCcw, Package, Truck } from "lucide-react-na
 import { TopBar } from "../../src/components/TopBar";
 import { StoreCard } from "../../src/components/StoreCard";
 import { ProductCard } from "../../src/components/ProductCard";
+import { Card } from "../../src/components/Card";
 import { StoreCardSkeleton, ProductCardSkeleton } from "../../src/components/Skeleton";
 import { palette, fonts, spacing, radii, shadows } from "../../src/lib/theme";
 import { stores as demoStores, products as demoProducts, categories } from "../../src/lib/demo-data";
@@ -81,16 +82,22 @@ export default function HomeScreen() {
                   {t("heroSubtitle")}
                 </Text>
 
-                <Pressable
+                <Card
+                  padding="md"
                   style={[styles.searchCard, isDesktop && styles.searchCardDesktop]}
-                  onPress={() => router.push("/(tabs)/search")}
                 >
-                  <View style={styles.searchIconCircle}>
-                    <Search size={16} color={palette.primary} />
-                  </View>
-                  <Text style={styles.searchPlaceholder}>{t("searchPlaceholder")}</Text>
-                  <Text style={styles.searchAction}>{t("searchAction")}</Text>
-                </Pressable>
+                  <Pressable
+                    style={styles.searchCardInner}
+                    onPress={() => router.push("/(tabs)/search")}
+                    accessibilityRole="button"
+                  >
+                    <View style={styles.searchIconCircle}>
+                      <Search size={16} color={palette.primary} />
+                    </View>
+                    <Text style={styles.searchPlaceholder}>{t("searchPlaceholder")}</Text>
+                    <Text style={styles.searchAction}>{t("searchAction")}</Text>
+                  </Pressable>
+                </Card>
 
                 <View style={styles.statsRow}>
                   <Stat n={statsLoaded ? `${storesData.length}+` : "—"} l={t("localStores")} />
@@ -124,20 +131,26 @@ export default function HomeScreen() {
 
         <View style={styles.content}>
           {/* Wasil Send CTA */}
-          <Pressable
-            onPress={() => router.push("/send")}
-            style={[styles.sendCard, shadows.card]}
-            accessibilityRole="button"
+          <Card
+            padding="md"
+            radius="xl"
+            style={styles.sendCard}
           >
-            <View style={[styles.sendIconCircle, { backgroundColor: `${palette.primary}15` }]}>
-              <Package size={24} color={palette.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sendCardTitle}>{t("sendTitle")}</Text>
-              <Text style={styles.sendCardSubtitle}>{t("sendSubtitle")}</Text>
-            </View>
-            <Truck size={20} color={palette.primary} />
-          </Pressable>
+            <Pressable
+              onPress={() => router.push("/send")}
+              style={styles.sendCardInner}
+              accessibilityRole="button"
+            >
+              <View style={[styles.sendIconCircle, { backgroundColor: `${palette.primary}15` }]}>
+                <Package size={24} color={palette.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sendCardTitle}>{t("sendTitle")}</Text>
+                <Text style={styles.sendCardSubtitle}>{t("sendSubtitle")}</Text>
+              </View>
+              <Truck size={20} color={palette.primary} />
+            </Pressable>
+          </Card>
 
           {/* Categories */}
           <ScrollView
@@ -176,11 +189,9 @@ export default function HomeScreen() {
               <View>
                 <Text style={styles.sectionTitle}>{t("storesNearYou")}</Text>
                 <Text style={styles.sectionSubtitle}>
-                  {filteredStores.length}{" "}
                   {filteredStores.length === 1
                     ? t("storeCount", { count: filteredStores.length })
-                    : t("storeCountPlural", { count: filteredStores.length })}{" "}
-                  {t("readyToChat")}
+                    : t("storeCountPlural", { count: filteredStores.length })}
                 </Text>
               </View>
               <Pressable onPress={() => router.push("/(tabs)/stores")}>
@@ -200,9 +211,9 @@ export default function HomeScreen() {
                   </View>
                 ))}
               {!storesLoading &&
-                filteredStores.map((s) => (
-                  <View key={s.id} style={[styles.storeGridItem, { width: isDesktop ? "23.5%" : "100%" }]}>
-                    <StoreCard store={s} showChat />
+                filteredStores.slice(0, 4).map((s) => (
+                  <View key={s.id} style={[styles.storeGridItem, { width: "100%" }]}>
+                    <StoreCard store={s} variant="compact" />
                   </View>
                 ))}
             </View>
@@ -247,13 +258,13 @@ export default function HomeScreen() {
               <View style={styles.merchantActions}>
                 <Pressable
                   style={styles.merchantPrimary}
-                  onPress={() => router.push("/merchant-dashboard")}
+                  onPress={() => router.push("/dashboard")}
                 >
                   <Text style={styles.merchantPrimaryText}>{t("openDashboard")}</Text>
                 </Pressable>
                 <Pressable
                   style={styles.merchantSecondary}
-                  onPress={() => router.push("/(tabs)/plans")}
+                  onPress={() => router.push("/plans")}
                 >
                   <Text style={styles.merchantSecondaryText}>{t("seePricing")}</Text>
                 </Pressable>
@@ -387,19 +398,16 @@ const styles = StyleSheet.create({
     maxWidth: 420,
   },
   searchCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    borderRadius: radii["2xl"],
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
-    ...shadows.card,
   },
   searchCardDesktop: {
     maxWidth: 420,
+  },
+  searchCardInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   searchIconCircle: {
     width: 32,
@@ -465,14 +473,12 @@ const styles = StyleSheet.create({
     gap: spacing.xl,
   },
   sendCard: {
+    // Container styling is handled by Card.
+  },
+  sendCardInner: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    backgroundColor: palette.card,
-    borderRadius: radii.xl,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: palette.border,
   },
   sendIconCircle: {
     width: 48,

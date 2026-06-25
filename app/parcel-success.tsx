@@ -11,12 +11,12 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CheckCircle, Upload, ArrowLeft } from "lucide-react-native";
+import { CheckCircle, Upload, ArrowLeft, Banknote } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../src/lib/supabase";
 import { useCustomerParcels } from "../src/hooks/useCustomerParcels";
 import { useTranslation } from "../src/lib/i18n";
-import { formatSAR } from "../src/lib/demo-data";
+import { formatSAR } from "../src/lib/format";
 import { palette, fonts, spacing, radii, shadows } from "../src/lib/theme";
 import { Button } from "../src/components/Button";
 
@@ -102,7 +102,7 @@ export default function ParcelSuccessScreen() {
           )}
         </View>
 
-        {parcel?.payment_status !== "verified" && (
+        {parcel && parcel.payment_method !== "cash" && parcel.payment_status !== "verified" && (
           <View style={[styles.card, shadows.card]}>
             <Text style={styles.cardTitle}>{t("uploadParcelReceipt")}</Text>
 
@@ -133,11 +133,30 @@ export default function ParcelSuccessScreen() {
           </View>
         )}
 
+        {parcel?.payment_method === "cash" && (
+          <View style={[styles.card, shadows.card]}>
+            <View style={styles.codHeader}>
+              <Banknote size={20} color={palette.success} />
+              <Text style={styles.cardTitle}>{t("cashOnDelivery")}</Text>
+            </View>
+            <Text style={styles.codBody}>
+              {t("codParcelSuccessBody", { payer: t(parcel.cash_payer === "sender" ? "cashPayerSender" : "cashPayerReceiver") })}
+            </Text>
+          </View>
+        )}
+
+        <Button
+          title={t("trackYourSend")}
+          variant="outline"
+          onPress={() => router.push(`/parcel/${id}`)}
+          style={{ marginTop: spacing.lg }}
+        />
+
         <Button
           title={t("continueShopping")}
           variant="outline"
           onPress={() => router.replace("/(tabs)/")}
-          style={{ marginTop: spacing.lg }}
+          style={{ marginTop: spacing.md }}
         />
       </ScrollView>
     </View>
@@ -188,7 +207,8 @@ const styles = StyleSheet.create({
     borderRadius: radii["2xl"],
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: `${palette.border}80`,
+    ...shadows.card,
   },
   cardTitle: {
     fontFamily: fonts.sansSemiBold,
@@ -219,5 +239,17 @@ const styles = StyleSheet.create({
     color: palette.success,
     textAlign: "center",
     marginTop: spacing.md,
+  },
+  codHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  codBody: {
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    color: palette.mutedForeground,
+    lineHeight: 18,
   },
 });

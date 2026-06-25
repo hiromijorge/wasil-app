@@ -21,6 +21,7 @@ import { AuthProvider } from "../src/lib/auth-context";
 import { CartProvider } from "../src/lib/cart-context";
 import { LangProvider } from "../src/lib/i18n";
 import { CartDrawer } from "../src/components/CartDrawer";
+import { NotificationListener } from "../src/components/NotificationListener";
 import { palette, fonts } from "../src/lib/theme";
 import * as SplashScreen from "expo-splash-screen";
 
@@ -91,14 +92,20 @@ export default function RootLayout() {
                 <Stack.Screen name="send" />
                 <Stack.Screen name="parcel-success" />
                 <Stack.Screen name="auth" />
-                <Stack.Screen name="merchant-dashboard" />
+                <Stack.Screen name="(merchant)" />
+                <Stack.Screen name="(driver)" />
+                <Stack.Screen name="(partner)" />
+                <Stack.Screen name="(admin)" />
+                <Stack.Screen name="merchant-onboarding" />
                 <Stack.Screen name="merchant-chat/[customerId]" />
-                <Stack.Screen name="billing" />
-                <Stack.Screen name="admin-billing" />
-                <Stack.Screen name="admin-payments" />
-                <Stack.Screen name="admin-config" />
+                <Stack.Screen name="addresses" />
+                <Stack.Screen name="reset-password" />
+                <Stack.Screen name="verify-email" />
+                <Stack.Screen name="privacy-policy" />
+                <Stack.Screen name="terms-of-service" />
               </Stack>
               <CartDrawer />
+              <NotificationListener />
               <StatusBar style="auto" />
             </View>
             </CartProvider>

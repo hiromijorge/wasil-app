@@ -10,11 +10,14 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Search, MapPin, X, RotateCcw } from "lucide-react-native";
+import { Search, MapPin, X, RotateCcw, Store } from "lucide-react-native";
 import { TopBar } from "../../src/components/TopBar";
 import { StoreCard } from "../../src/components/StoreCard";
+import { Card } from "../../src/components/Card";
 import { StoreCardSkeleton } from "../../src/components/Skeleton";
-import { palette, fonts, spacing, radii, shadows } from "../../src/lib/theme";
+import { SectionHeader } from "../../src/components/SectionHeader";
+import { EmptyState } from "../../src/components/EmptyState";
+import { palette, fonts, typography, spacing, radii } from "../../src/lib/theme";
 import { categories } from "../../src/lib/demo-data";
 import { useStores } from "../../src/hooks/useStores";
 import { useTranslation } from "../../src/lib/i18n";
@@ -101,11 +104,10 @@ export default function StoresScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>{t("storesTitle")}</Text>
-        <Text style={styles.subtitle}>{t("storesSubtitle")}</Text>
+        <SectionHeader title={t("storesTitle")} subtitle={t("storesSubtitle")} />
 
-        <View style={styles.searchBar}>
-          <Search size={18} color={palette.mutedForeground} />
+        <Card padding="md" style={styles.searchBar}>
+          <Search size={20} color={palette.mutedForeground} />
           <TextInput
             style={styles.input}
             placeholder={t("storesInputPlaceholder")}
@@ -114,11 +116,11 @@ export default function StoresScreen() {
             onChangeText={setQuery}
           />
           {query.length > 0 && (
-            <Pressable onPress={() => setQuery("")}>
-              <X size={16} color={palette.mutedForeground} />
+            <Pressable onPress={() => setQuery("")} hitSlop={8}>
+              <X size={18} color={palette.mutedForeground} />
             </Pressable>
           )}
-        </View>
+        </Card>
 
         <ScrollView
           horizontal
@@ -195,13 +197,20 @@ export default function StoresScreen() {
                 <StoreCardSkeleton />
               </View>
             ))}
+            {!isLoading && filtered.length === 0 && (
+              <EmptyState
+                icon={<Store size={28} color={palette.primary} />}
+                title={t("noStoresFound")}
+                subtitle={t("tryDifferentSearch")}
+              />
+            )}
           {!isLoading &&
             filtered.map((s) => (
               <View
                 key={s.id}
                 style={[styles.gridItem, { width: isDesktop ? "48%" : "100%" }]}
               >
-                <StoreCard store={s} showChat />
+                    <StoreCard store={s} />
               </View>
             ))}
         </View>
@@ -235,34 +244,26 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   title: {
-    fontFamily: fonts.display,
-    fontSize: 28,
-    color: palette.foreground,
+    ...typography.pageTitle,
     letterSpacing: -0.025,
   },
   subtitle: {
-    fontFamily: fonts.sans,
-    fontSize: 13,
-    color: palette.mutedForeground,
+    ...typography.pageSubtitle,
     marginTop: 2,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    borderRadius: radii["2xl"],
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
     marginTop: spacing.md,
-    ...shadows.card,
+    minHeight: 56,
   },
   input: {
     flex: 1,
     fontFamily: fonts.sans,
-    fontSize: 14,
+    fontSize: 16,
     color: palette.foreground,
   },
   categories: {
@@ -339,6 +340,33 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   gridItem: {},
+  emptyState: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xxl,
+    gap: spacing.md,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.full,
+    backgroundColor: palette.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyTitle: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: palette.foreground,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    color: palette.mutedForeground,
+    textAlign: "center",
+  },
   errorRow: {
     flexDirection: "row",
     alignItems: "center",

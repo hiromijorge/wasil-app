@@ -3,10 +3,15 @@ import { supabase } from "../lib/supabase";
 import type { Database } from "../lib/database.types";
 
 type DeliveryRow = Database["public"]["Tables"]["deliveries"]["Row"];
+type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 type DeliveryStatus = DeliveryRow["status"];
 
+export type DriverDelivery = DeliveryRow & {
+  orders?: Pick<OrderRow, "payment_method"> | null;
+};
+
 export function useDriverDeliveries(driverId?: string) {
-  const [data, setData] = useState<DeliveryRow[]>([]);
+  const [data, setData] = useState<DriverDelivery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -17,14 +22,14 @@ export function useDriverDeliveries(driverId?: string) {
     setIsLoading(true);
     const { data: rows, error } = await supabase
       .from("deliveries")
-      .select("*")
+      .select("*, orders(payment_method)")
       .or(
         `driver_id.eq.${driverId},and(driver_id.is.null,status.eq.assigned)`
       )
       .order("created_at", { ascending: false });
 
     if (!error && rows) {
-      setData(rows as DeliveryRow[]);
+      setData(rows as DriverDelivery[]);
     }
     setIsLoading(false);
   }, [driverId]);

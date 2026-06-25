@@ -13,6 +13,7 @@ export type CustomerOrder = {
   total: number;
   createdAt: string;
   paymentStatus: OrderRow["customer_payment_status"];
+  paymentMethod: OrderRow["payment_method"];
 };
 
 export function useCustomerOrders() {
@@ -40,6 +41,7 @@ export function useCustomerOrders() {
           total: Number(row.total),
           createdAt: row.created_at,
           paymentStatus: row.customer_payment_status,
+          paymentMethod: row.payment_method,
         }),
       );
     },

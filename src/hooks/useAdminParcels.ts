@@ -19,6 +19,7 @@ export function useAdminParcels() {
       .from("parcel_deliveries")
       .select("*, sender:profiles(full_name)")
       .eq("payment_status", "pending")
+      .neq("payment_method", "cash")
       .order("created_at", { ascending: false });
 
     if (!error && rows) setData(rows as AdminParcel[]);

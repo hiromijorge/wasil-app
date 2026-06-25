@@ -50,6 +50,15 @@ export const fonts = {
   arabicBold: "Tajawal_700Bold",
 };
 
+export const typography = {
+  pageTitle: { fontFamily: fonts.display, fontSize: 24, color: palette.foreground },
+  pageSubtitle: { fontFamily: fonts.sans, fontSize: 13, color: palette.mutedForeground },
+  sectionTitle: { fontFamily: fonts.displaySemiBold, fontSize: 20, color: palette.foreground },
+  cardTitle: { fontFamily: fonts.sansSemiBold, fontSize: 16, color: palette.foreground },
+  body: { fontFamily: fonts.sans, fontSize: 14, color: palette.foreground },
+  caption: { fontFamily: fonts.sans, fontSize: 12, color: palette.mutedForeground },
+};
+
 export const spacing = {
   xs: 4,
   sm: 8,

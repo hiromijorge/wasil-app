@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react-native";
 import { useCart } from "../lib/cart-context";
-import { formatSAR } from "../lib/demo-data";
+import { formatSAR } from "../lib/format";
 import { palette, fonts, spacing, radii, shadows } from "../lib/theme";
 import { Button } from "./Button";
 

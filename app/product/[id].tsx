@@ -10,12 +10,14 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Minus, Plus, ChevronLeft, Check, RotateCcw } from "lucide-react-native";
+import { Minus, Plus, ChevronLeft, Check, RotateCcw, ShoppingCart, Zap } from "lucide-react-native";
+import { useWindowDimensions } from "react-native";
 import { TopBar } from "../../src/components/TopBar";
+import { Card, CardPressable } from "../../src/components/Card";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductCardSkeleton } from "../../src/components/Skeleton";
 import { palette, fonts, spacing, radii, shadows } from "../../src/lib/theme";
-import { formatSAR } from "../../src/lib/demo-data";
+import { formatSAR } from "../../src/lib/format";
 import { slugify } from "../../src/lib/slugify";
 import { useCart } from "../../src/lib/cart-context";
 import { useTranslation } from "../../src/lib/i18n";
@@ -27,6 +29,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { t } = useTranslation();
   const { addItem } = useCart();
 
@@ -66,6 +69,17 @@ export default function ProductDetailScreen() {
     setTimeout(() => setAdded(false), 1200);
   };
 
+  const handleBuyNow = () => {
+    if (!product || store?.restrictionActive) return;
+    router.push({
+      pathname: "/checkout",
+      params: {
+        buyNowProductId: product.id,
+        buyNowQty: String(qty),
+      },
+    });
+  };
+
   if (productLoading || storeLoading) {
     return (
       <View style={[styles.container, styles.center]}>
@@ -103,28 +117,21 @@ export default function ProductDetailScreen() {
       <TopBar showBack showCart />
 
       <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: insets.bottom + 120 },
+          { paddingBottom: spacing.xl },
         ]}
       >
-        <Pressable
-          style={styles.backLink}
-          onPress={() => router.push(`/store/${slugify(store.name)}`)}
-        >
-          <ChevronLeft size={14} color={palette.mutedForeground} />
-          <Text style={styles.backLinkText}>{t("backToStore", { store: store.name })}</Text>
-        </Pressable>
-
         <View style={styles.columns}>
-          <View style={[styles.imageCard, shadows.card]}>
+          <Card radius="3xl" overflowHidden style={styles.imageCard}>
             <Image
               source={typeof product.image === "string" ? { uri: product.image } : product.image}
               style={styles.image}
               resizeMode="cover"
             />
-          </View>
+          </Card>
 
           <View style={styles.info}>
             {store.restrictionActive && (
@@ -147,7 +154,8 @@ export default function ProductDetailScreen() {
 
             <Text style={styles.description}>{product.description}</Text>
 
-            <Pressable
+            <CardPressable
+              padding="sm"
               style={styles.storeCard}
               onPress={() => router.push(`/store/${slugify(store.name)}`)}
             >
@@ -165,7 +173,7 @@ export default function ProductDetailScreen() {
                 </Text>
               </View>
               <Text style={styles.storeAction}>{t("viewStore")}</Text>
-            </Pressable>
+            </CardPressable>
 
             <View style={styles.quantityRow}>
               <Text style={styles.quantityLabel}>{t("quantity")}</Text>
@@ -186,26 +194,6 @@ export default function ProductDetailScreen() {
               </View>
             </View>
 
-            <Pressable
-              style={[
-                styles.addButton,
-                added && styles.addButtonSuccess,
-                store.restrictionActive && styles.addButtonDisabled,
-              ]}
-              onPress={handleAdd}
-              disabled={store.restrictionActive}
-            >
-              {added ? (
-                <Check size={18} color={palette.primaryForeground} />
-              ) : null}
-              <Text style={styles.addButtonText}>
-                {store.restrictionActive
-                  ? t("storeRestricted")
-                  : added
-                  ? t("addedToCart")
-                  : t("addToCart")}
-              </Text>
-            </Pressable>
           </View>
         </View>
 
@@ -237,6 +225,59 @@ export default function ProductDetailScreen() {
           </View>
         )}
       </ScrollView>
+
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: Math.max(insets.bottom, spacing.md) },
+        ]}
+      >
+        <View
+          style={[
+            styles.actionsRow,
+            { flexDirection: width >= 420 ? "row" : "column" },
+          ]}
+        >
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.addButton,
+              added && styles.addButtonSuccess,
+              store.restrictionActive && styles.actionButtonDisabled,
+            ]}
+            onPress={handleAdd}
+            disabled={store.restrictionActive}
+          >
+            {added ? (
+              <Check size={18} color={palette.primaryForeground} />
+            ) : (
+              <ShoppingCart size={18} color={palette.primaryForeground} />
+            )}
+            <Text style={styles.actionButtonText}>
+              {store.restrictionActive
+                ? t("storeRestricted")
+                : added
+                ? t("addedToCart")
+                : t("addToCart")}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.actionButton,
+              styles.buyNowButton,
+              store.restrictionActive && styles.actionButtonDisabled,
+            ]}
+            onPress={handleBuyNow}
+            disabled={store.restrictionActive}
+          >
+            <Zap size={18} color={palette.primary} />
+            <Text style={[styles.actionButtonText, styles.buyNowButtonText]}>
+              {t("buyNow")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
@@ -251,9 +292,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  scrollView: {
+    flex: 1,
+  },
   scroll: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
+  },
+  footer: {
+    backgroundColor: palette.card,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
   },
   backLink: {
     flexDirection: "row",
@@ -270,12 +321,8 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   imageCard: {
-    backgroundColor: palette.card,
-    borderRadius: radii["3xl"],
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    overflow: "hidden",
     aspectRatio: 1,
+    // Container styling is handled by Card.
   },
   image: {
     width: "100%",
@@ -295,12 +342,12 @@ const styles = StyleSheet.create({
   restrictionTitle: {
     fontFamily: fonts.sansBold,
     fontSize: 13,
-    color: palette.destructive,
+    color: palette.foreground,
   },
   restrictionText: {
     fontFamily: fonts.sans,
     fontSize: 12,
-    color: palette.destructive,
+    color: palette.foreground,
   },
   categoryBadge: {
     alignSelf: "flex-start",
@@ -338,13 +385,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    borderRadius: radii["2xl"],
-    padding: spacing.sm,
     marginTop: spacing.sm,
-    ...shadows.card,
+    // Container styling is handled by CardPressable.
   },
   storeImageWrap: {
     width: 52,
@@ -411,27 +453,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: palette.foreground,
   },
-  addButton: {
+  actionsRow: {
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  actionButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
-    backgroundColor: palette.primary,
     borderRadius: radii["2xl"],
     paddingVertical: 14,
-    marginTop: spacing.sm,
+    minHeight: 52,
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
+  },
+  addButton: {
+    backgroundColor: palette.primary,
     ...shadows.card,
   },
   addButtonSuccess: {
     backgroundColor: palette.success,
   },
-  addButtonDisabled: {
-    backgroundColor: palette.muted,
+  buyNowButton: {
+    backgroundColor: palette.card,
+    borderWidth: 1.5,
+    borderColor: palette.primary,
   },
-  addButtonText: {
+  actionButtonText: {
     fontFamily: fonts.sansBold,
     fontSize: 14,
     color: palette.primaryForeground,
+  },
+  buyNowButtonText: {
+    color: palette.primary,
   },
   relatedSection: {
     marginTop: spacing.xxl,

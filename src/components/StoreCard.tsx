@@ -1,92 +1,108 @@
-import { View, Text, Pressable, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { MessageCircle } from "lucide-react-native";
-import { palette, fonts, spacing, radii, shadows } from "../lib/theme";
+
+import { CardPressable } from "./Card";
+import { palette, fonts, spacing, radii } from "../lib/theme";
 import { slugify } from "../lib/slugify";
 import { type Store } from "../lib/demo-data";
+import { useTranslation } from "../lib/i18n";
 
 interface StoreCardProps {
   store: Store;
-  showChat?: boolean;
+  variant?: "default" | "compact";
 }
 
-export function StoreCard({ store, showChat = false }: StoreCardProps) {
+export function StoreCard({ store, variant = "default" }: StoreCardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
+  const compact = variant === "compact";
 
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    <CardPressable
+      radius={compact ? "xl" : "3xl"}
+      overflowHidden
+      style={({ pressed }) => [
+        compact ? styles.cardCompact : styles.card,
+        pressed && styles.pressed,
+      ]}
       onPress={() => router.push(`/store/${slugify(store.name)}`)}
+      accessibilityRole="button"
     >
-      <View style={styles.imageWrapper}>
+      <View style={compact ? styles.imageWrapperCompact : styles.imageWrapper}>
         <Image
           source={typeof store.image === "string" ? { uri: store.image } : store.image}
-          style={styles.image}
+          style={compact ? styles.imageCompact : styles.image}
           resizeMode="cover"
         />
-        <View style={styles.imageOverlay} />
+        {!compact && <View style={styles.imageOverlay} />}
 
         <View
           style={[
-            styles.statusBadge,
+            compact ? styles.statusBadgeCompact : styles.statusBadge,
             store.open ? styles.statusOpen : styles.statusClosed,
           ]}
         >
           <View style={[styles.dot, store.open ? styles.dotOpen : styles.dotClosed]} />
-          <Text style={styles.statusText}>{store.open ? "Open now" : "Closed"}</Text>
+          {!compact && <Text style={styles.statusText}>{store.open ? "Open now" : "Closed"}</Text>}
         </View>
 
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>
-            {store.categoryEmoji} {store.category}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <Text style={styles.name} numberOfLines={2}>
-            {store.name}
-          </Text>
-          <View style={styles.rating}>
-            <Text style={styles.star}>★</Text>
-            <Text style={styles.ratingText}>
-              {store.rating}{" "}
-              <Text style={styles.reviews}>({store.reviews})</Text>
+        {!compact && (
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>
+              {store.categoryEmoji} {store.category}
             </Text>
           </View>
+        )}
+
+        {store.isDemo && (
+          <View style={styles.demoBadge}>
+            <Text style={styles.demoText}>{t("sample")}</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={compact ? styles.bodyCompact : styles.body}>
+        <View style={styles.titleRow}>
+          <Text style={compact ? styles.nameCompact : styles.name} numberOfLines={2}>
+            {store.name}
+          </Text>
+            {!compact && (
+            <View style={styles.rating}>
+              <Text style={styles.star}>★</Text>
+              <Text style={styles.ratingText}>
+                {store.rating}{" "}
+                <Text style={styles.reviews}>({store.reviews})</Text>
+              </Text>
+            </View>
+          )}
         </View>
 
-        <Text style={styles.meta}>
+        <Text style={compact ? styles.metaCompact : styles.meta}>
           <Text>📍 </Text>
           {store.location} · {store.hours}
         </Text>
 
-        {showChat && (
-          <Pressable
-            style={styles.chatButton}
-            onPress={(e) => {
-              e.stopPropagation?.();
-              router.push(`/chat/${store.id}`);
-            }}
-          >
-            <MessageCircle size={16} color={palette.card} />
-            <Text style={styles.chatButtonText}>Chat in app</Text>
-          </Pressable>
+        {compact && (
+          <View style={styles.ratingCompact}>
+            <Text style={styles.star}>★</Text>
+            <Text style={styles.ratingTextCompact}>
+              {store.rating}{" "}
+              <Text style={styles.reviews}>({store.reviews})</Text>
+            </Text>
+            <Text style={styles.categoryCompact}>
+              {store.categoryEmoji} {store.category}
+            </Text>
+          </View>
         )}
+
       </View>
-    </Pressable>
+    </CardPressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: palette.card,
-    borderRadius: radii["3xl"],
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    overflow: "hidden",
-    ...shadows.card,
+    // Container styling is handled by CardPressable.
   },
   pressed: {
     opacity: 0.96,
@@ -152,6 +168,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: palette.foreground,
   },
+  demoBadge: {
+    position: "absolute",
+    bottom: spacing.sm,
+    left: spacing.sm,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: radii.full,
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  demoText: {
+    fontFamily: fonts.sansBold,
+    fontSize: 10,
+    color: "#fff",
+  },
   body: {
     padding: spacing.md,
     gap: spacing.xs,
@@ -192,19 +222,67 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: palette.mutedForeground,
   },
-  chatButton: {
+  // Compact variant
+  cardCompact: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    backgroundColor: palette.success,
-    borderRadius: radii.xl,
-    paddingVertical: 10,
-    marginTop: spacing.sm,
+    // Container styling is handled by CardPressable.
   },
-  chatButtonText: {
+  imageWrapperCompact: {
+    position: "relative",
+    width: 88,
+    height: 88,
+    overflow: "hidden",
+  },
+  imageCompact: {
+    width: "100%",
+    height: "100%",
+  },
+  statusBadgeCompact: {
+    position: "absolute",
+    top: spacing.xs,
+    right: spacing.xs,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: palette.success,
+  },
+  bodyCompact: {
+    flex: 1,
+    padding: spacing.sm,
+    gap: 2,
+    justifyContent: "center",
+  },
+  nameCompact: {
+    flex: 1,
     fontFamily: fonts.sansSemiBold,
-    fontSize: 13,
-    color: palette.card,
+    fontSize: 14,
+    color: palette.foreground,
+    lineHeight: 18,
+  },
+  metaCompact: {
+    fontFamily: fonts.sans,
+    fontSize: 11,
+    color: palette.mutedForeground,
+  },
+  ratingCompact: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: 2,
+  },
+  ratingTextCompact: {
+    fontFamily: fonts.sansSemiBold,
+    fontSize: 11,
+    color: palette.foreground,
+  },
+  categoryCompact: {
+    fontFamily: fonts.sansMedium,
+    fontSize: 10,
+    color: palette.mutedForeground,
+    backgroundColor: palette.muted,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.full,
   },
 });

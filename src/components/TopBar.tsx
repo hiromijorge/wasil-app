@@ -70,16 +70,26 @@ export function TopBar({
         ]}
       >
         <View style={styles.inner}>
-          {/* Left: back or logo */}
+          {/* Left: page title (with optional back) or brand logo */}
           <View style={styles.left}>
-            {showBack ? (
-              <Pressable
-                style={styles.iconButton}
-                onPress={onBack ? onBack : () => router.back()}
-                hitSlop={8}
-              >
-                <ArrowLeft size={20} color={palette.foreground} />
-              </Pressable>
+            {(title || showBack) && !isDesktop ? (
+              <View style={styles.titleRow}>
+                {showBack && (
+                  <Pressable
+                    style={[styles.iconButton, styles.backButton]}
+                    onPress={onBack ? onBack : () => router.back()}
+                    hitSlop={8}
+                    accessibilityLabel={t("goBack")}
+                  >
+                    <ArrowLeft size={20} color={palette.foreground} />
+                  </Pressable>
+                )}
+                {title ? (
+                  <Text style={styles.pageTitle} numberOfLines={1}>
+                    {title}
+                  </Text>
+                ) : null}
+              </View>
             ) : (
               <Pressable
                 style={styles.logoWrapper}
@@ -93,23 +103,13 @@ export function TopBar({
                 >
                   <Text style={styles.logoText}>W</Text>
                 </LinearGradient>
-                <View>
-                  <Text style={styles.brand}>Wasil</Text>
-                  <Text style={styles.tagline}>YEMEN CONNECT</Text>
-                </View>
+                <Text style={styles.brand}>Wasil</Text>
               </Pressable>
             )}
           </View>
 
-          {/* Center: title only on mobile */}
-          {title && !isDesktop ? (
-            <View style={styles.center}>
-              <Text style={styles.title}>{title}</Text>
-            </View>
-          ) : null}
-
           {/* Desktop nav */}
-          {isDesktop && !title ? (
+          {isDesktop ? (
             <View style={styles.desktopNav}>
               <Pressable onPress={() => router.push("/(tabs)/stores")}>
                 <Text style={styles.navLink}>{t("storesTitle")}</Text>
@@ -151,7 +151,7 @@ export function TopBar({
               </Pressable>
               <Pressable
                 style={styles.merchantButton}
-                onPress={() => router.push("/merchant-dashboard")}
+                onPress={() => router.push("/dashboard")}
               >
                 <Text style={styles.merchantButtonText}>{t("forMerchants")} →</Text>
               </Pressable>
@@ -222,20 +222,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  center: {
-    flex: 1,
+  titleRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  pageTitle: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: palette.foreground,
+    flexShrink: 1,
+  },
+  backButton: {
+    marginRight: spacing.xs,
   },
   right: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: palette.foreground,
   },
   logoWrapper: {
     flexDirection: "row",
@@ -261,13 +265,6 @@ const styles = StyleSheet.create({
     color: palette.foreground,
     lineHeight: 18,
     letterSpacing: -0.5,
-  },
-  tagline: {
-    fontFamily: fonts.sansMedium,
-    fontSize: 9,
-    color: palette.mutedForeground,
-    letterSpacing: 1,
-    marginTop: 2,
   },
   iconButton: {
     width: 36,

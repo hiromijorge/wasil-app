@@ -15,10 +15,10 @@ export const PLANS: SubscriptionPlan[] = [
     id: "free",
     name: "Free",
     priceUsd: 0,
-    maxProducts: 30,
+    maxProducts: 20,
     maxPhotosPerProduct: 1,
     features: [
-      "30 products maximum",
+      "20 products maximum",
       "1 photo per product",
       "Basic storefront",
       "WhatsApp ordering",

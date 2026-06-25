@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,15 @@ import {
   Pressable,
   useWindowDimensions,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Search, X, RotateCcw, SlidersHorizontal } from "lucide-react-native";
+import { Search, X, RotateCcw, SlidersHorizontal, Package } from "lucide-react-native";
 import { TopBar } from "../../src/components/TopBar";
 import { ProductCard } from "../../src/components/ProductCard";
-import { StoreCard } from "../../src/components/StoreCard";
-import {
-  StoreCardSkeleton,
-  ProductCardSkeleton,
-} from "../../src/components/Skeleton";
-import { palette, fonts, spacing, radii, shadows } from "../../src/lib/theme";
-import { categories } from "../../src/lib/demo-data";
-import { useStores } from "../../src/hooks/useStores";
+import { Card } from "../../src/components/Card";
+import { ProductCardSkeleton } from "../../src/components/Skeleton";
+import { SectionHeader } from "../../src/components/SectionHeader";
+import { EmptyState } from "../../src/components/EmptyState";
+import { palette, fonts, typography, spacing, radii } from "../../src/lib/theme";
 import { useProducts, type ProductSort } from "../../src/hooks/useProducts";
 import { useTranslation, type TranslationKey } from "../../src/lib/i18n";
 
@@ -35,24 +31,13 @@ const SORT_OPTIONS: { key: ProductSort; label: TranslationKey }[] = [
 ];
 
 export default function SearchScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = width >= MD_BREAKPOINT;
 
   const { t } = useTranslation();
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState("all");
   const [sortBy, setSortBy] = useState<ProductSort>("relevance");
-
-  const categoryFilter = cat === "all" ? undefined : cat;
-
-  const {
-    data: storesData = [],
-    isLoading: storesLoading,
-    error: storesError,
-    refetch: refetchStores,
-  } = useStores({ query: q, category: categoryFilter });
 
   const {
     data: productsData = [],
@@ -61,22 +46,11 @@ export default function SearchScreen() {
     refetch: refetchProducts,
   } = useProducts({ query: q, sortBy });
 
-  // If a category is selected, only show products from stores in that category.
-  const storeIdsInCategory = useMemo(
-    () => new Set(cat === "all" ? [] : storesData.map((s) => s.id)),
-    [cat, storesData]
-  );
-
-  const productMatchesList = useMemo(() => {
-    if (cat === "all") return productsData;
-    return productsData.filter((p) => storeIdsInCategory.has(p.storeId));
-  }, [productsData, cat, storeIdsInCategory]);
-
   const hasQuery = q.trim().length > 0;
 
   return (
     <View style={styles.container}>
-      <TopBar title="Search" showBack onBack={() => router.push("/(tabs)/")} showCart />
+      <TopBar showCart />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -86,11 +60,10 @@ export default function SearchScreen() {
         ]}
       >
         <View style={styles.content}>
-          <Text style={styles.heading}>{t("searchTitle")}</Text>
-          <Text style={styles.subheading}>{t("searchSubtitle")}</Text>
+          <SectionHeader title={t("searchTitle")} subtitle={t("searchSubtitle")} />
 
-          <View style={styles.searchBar}>
-            <Search size={18} color={palette.mutedForeground} />
+          <Card padding="md" style={styles.searchBar}>
+            <Search size={20} color={palette.mutedForeground} />
             <TextInput
               style={styles.input}
               placeholder={t("searchInputPlaceholder")}
@@ -100,11 +73,11 @@ export default function SearchScreen() {
               autoFocus
             />
             {q.length > 0 && (
-              <Pressable onPress={() => setQ("")}>
-                <X size={16} color={palette.mutedForeground} />
+              <Pressable onPress={() => setQ("")} hitSlop={8}>
+                <X size={18} color={palette.mutedForeground} />
               </Pressable>
             )}
-          </View>
+          </Card>
 
           <View style={styles.suggestions}>
             {suggestions.map((s) => (
@@ -114,44 +87,15 @@ export default function SearchScreen() {
             ))}
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categories}
-          >
-            {categories.map((c) => {
-              const active = cat === c.id;
-              return (
-                <Pressable
-                  key={c.id}
-                  style={[styles.categoryChip, active && styles.categoryChipActive]}
-                  onPress={() => setCat(c.id)}
-                >
-                  <Text style={styles.categoryEmoji}>{c.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.categoryLabel,
-                      active && styles.categoryLabelActive,
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
           {hasQuery && (
             <Text style={styles.resultMeta}>
               {t("resultsMeta", {
-                products: productMatchesList.length,
-                stores: storesData.length,
+                products: productsData.length,
                 query: q,
               })}
             </Text>
           )}
 
-          {/* Products */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t("productsSection")}</Text>
@@ -183,10 +127,11 @@ export default function SearchScreen() {
               <ErrorRetry message={t("couldNotLoadProducts")} onRetry={refetchProducts} />
             )}
 
-            {!productsLoading && productMatchesList.length === 0 && (
-              <Text style={styles.empty}>
-                {hasQuery ? t("noProductsFound") : t("searchPromptProducts")}
-              </Text>
+            {!productsLoading && productsData.length === 0 && (
+              <EmptyState
+                icon={<Package size={28} color={palette.primary} />}
+                title={hasQuery ? t("noProductsFound") : t("searchPromptProducts")}
+              />
             )}
 
             <View style={styles.productGrid}>
@@ -200,53 +145,12 @@ export default function SearchScreen() {
                   </View>
                 ))}
               {!productsLoading &&
-                productMatchesList.map((p) => (
+                productsData.map((p) => (
                   <View
                     key={p.id}
                     style={[styles.productGridItem, { width: isDesktop ? "15%" : "47%" }]}
                   >
                     <ProductCard product={p} />
-                  </View>
-                ))}
-            </View>
-          </View>
-
-          {/* Stores */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t("storesSection")}</Text>
-              <Pressable onPress={() => router.push("/(tabs)/stores")}>
-                <Text style={styles.seeAll}>{t("seeAll")}</Text>
-              </Pressable>
-            </View>
-
-            {storesError && (
-              <ErrorRetry message={t("couldNotLoadStores")} onRetry={refetchStores} />
-            )}
-
-            {!storesLoading && storesData.length === 0 && (
-              <Text style={styles.empty}>
-                {hasQuery ? t("noStoresFound") : t("searchPromptStores")}
-              </Text>
-            )}
-
-            <View style={styles.storeGrid}>
-              {storesLoading &&
-                Array.from({ length: isDesktop ? 4 : 2 }).map((_, i) => (
-                  <View
-                    key={`store-skel-${i}`}
-                    style={[styles.storeGridItem, { width: isDesktop ? "48%" : "100%" }]}
-                  >
-                    <StoreCardSkeleton />
-                  </View>
-                ))}
-              {!storesLoading &&
-                storesData.map((s) => (
-                  <View
-                    key={s.id}
-                    style={[styles.storeGridItem, { width: isDesktop ? "48%" : "100%" }]}
-                  >
-                    <StoreCard store={s} />
                   </View>
                 ))}
             </View>
@@ -280,33 +184,25 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   heading: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: palette.foreground,
+    ...typography.pageTitle,
   },
   subheading: {
-    fontFamily: fonts.sans,
-    fontSize: 13,
-    color: palette.mutedForeground,
+    ...typography.pageSubtitle,
     marginTop: 2,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    borderRadius: radii["2xl"],
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
     marginTop: spacing.md,
-    ...shadows.card,
+    minHeight: 56,
   },
   input: {
     flex: 1,
     fontFamily: fonts.sans,
-    fontSize: 14,
+    fontSize: 16,
     color: palette.foreground,
   },
   suggestions: {
@@ -320,44 +216,13 @@ const styles = StyleSheet.create({
     borderColor: `${palette.border}80`,
     backgroundColor: palette.card,
     borderRadius: radii.full,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
   },
   suggestionText: {
     fontFamily: fonts.sansMedium,
-    fontSize: 11,
+    fontSize: 12,
     color: palette.mutedForeground,
-  },
-  categories: {
-    gap: spacing.sm,
-    paddingRight: spacing.lg,
-    marginTop: spacing.sm,
-  },
-  categoryChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    backgroundColor: palette.card,
-  },
-  categoryChipActive: {
-    backgroundColor: palette.primary,
-    borderColor: palette.primary,
-  },
-  categoryEmoji: {
-    fontSize: 14,
-  },
-  categoryLabel: {
-    fontFamily: fonts.sansSemiBold,
-    fontSize: 13,
-    color: palette.foreground,
-  },
-  categoryLabelActive: {
-    color: palette.primaryForeground,
   },
   resultMeta: {
     fontFamily: fonts.sans,
@@ -390,8 +255,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   sortChip: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: `${palette.border}80`,
@@ -402,8 +267,8 @@ const styles = StyleSheet.create({
     borderColor: palette.primary,
   },
   sortChipText: {
-    fontFamily: fonts.sansMedium,
-    fontSize: 10,
+    fontFamily: fonts.sansSemiBold,
+    fontSize: 12,
     color: palette.mutedForeground,
   },
   sortChipTextActive: {
@@ -415,21 +280,25 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   productGridItem: {},
-  storeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xl,
     gap: spacing.md,
   },
-  storeGridItem: {},
-  empty: {
-    fontFamily: fonts.sans,
-    fontSize: 13,
-    color: palette.mutedForeground,
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.full,
+    backgroundColor: palette.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  seeAll: {
+  emptyTitle: {
     fontFamily: fonts.sansSemiBold,
-    fontSize: 13,
-    color: palette.primary,
+    fontSize: 14,
+    color: palette.mutedForeground,
+    textAlign: "center",
   },
   errorRow: {
     flexDirection: "row",

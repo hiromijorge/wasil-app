@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,31 +7,59 @@ import {
   Pressable,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TopBar } from "../src/components/TopBar";
 import { Input } from "../src/components/Input";
+import { Card } from "../src/components/Card";
+import { AddressAutocomplete } from "../src/components/AddressAutocomplete";
+import { type GeoLocation } from "../src/components/LocationButton";
 import { palette, fonts, spacing, radii, shadows } from "../src/lib/theme";
-import { formatSAR } from "../src/lib/demo-data";
+import { formatSAR } from "../src/lib/format";
 import { supabase } from "../src/lib/supabase";
 import { useCart } from "../src/lib/cart-context";
 import { useAuth } from "../src/lib/auth-context";
 import { useTranslation } from "../src/lib/i18n";
 import { useStores } from "../src/hooks/useStores";
+import { useProduct } from "../src/hooks/useProduct";
 import { useCreateOrder } from "../src/hooks/useCreateOrder";
+import { useAddresses } from "../src/hooks/useAddresses";
+import { usePlatformConfig } from "../src/hooks/usePlatformConfig";
+import type { Database } from "../src/lib/database.types";
+
+type AddressRow = Database["public"]["Tables"]["addresses"]["Row"];
 
 type DeliveryType = "pickup" | "delivery";
+type PaymentMethod = "bank_transfer" | "cash";
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { plan } = useLocalSearchParams<{ plan?: string }>();
-  const { items, subtotal, clearCart } = useCart();
-  const { session } = useAuth();
+  const { plan, buyNowProductId, buyNowQty } = useLocalSearchParams<{
+    plan?: string;
+    buyNowProductId?: string;
+    buyNowQty?: string;
+  }>();
+  const { items, clearCart } = useCart();
+  const { session, profile, user } = useAuth();
   const { t } = useTranslation();
   const { createOrder } = useCreateOrder();
   const { data: storesData = [] } = useStores();
+  const { data: config } = usePlatformConfig();
+  const { data: buyNowProduct, isLoading: buyNowLoading } = useProduct(buyNowProductId);
+
+  const isBuyNow = Boolean(buyNowProductId && buyNowProduct);
+  const checkoutItems = useMemo(() => {
+    if (!isBuyNow || !buyNowProduct) return items;
+    return [{ product: buyNowProduct, quantity: Number(buyNowQty) || 1 }];
+  }, [isBuyNow, buyNowProduct, buyNowQty, items]);
+
+  const checkoutSubtotal = useMemo(
+    () => checkoutItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+    [checkoutItems],
+  );
 
   const storeMap = useMemo(
     () => new Map(storesData.map((s) => [s.id, s])),
@@ -43,14 +71,31 @@ export default function CheckoutScreen() {
 
   const [phone, setPhone] = useState("+967");
   const [address, setAddress] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState<GeoLocation | null>(null);
+  const [contactName, setContactName] = useState(profile?.full_name ?? "");
+  const [buildingFloor, setBuildingFloor] = useState("");
   const [notes, setNotes] = useState("");
   const [deliveryTypes, setDeliveryTypes] = useState<Record<string, DeliveryType>>({});
+  const [paymentMethods, setPaymentMethods] = useState<Record<string, PaymentMethod>>({});
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
+
+  const cashThreshold = config?.cod_high_value_threshold_sar ?? 300;
+
+  const { data: savedAddresses = [] } = useAddresses(user?.id);
+
+  if (buyNowProductId && buyNowLoading) {
+    return (
+      <View style={[styles.container, { alignItems: "center", justifyContent: "center" }]}>
+        <ActivityIndicator color={palette.primary} />
+      </View>
+    );
+  }
 
   const groups = useMemo(() => {
     if (isPlanCheckout) return [];
-    const map = new Map<string, typeof items>();
-    items.forEach((item) => {
+    const map = new Map<string, typeof checkoutItems>();
+    checkoutItems.forEach((item) => {
       const list = map.get(item.product.storeId) ?? [];
       list.push(item);
       map.set(item.product.storeId, list);
@@ -64,20 +109,50 @@ export default function CheckoutScreen() {
           subtotal: groupItems.reduce((s, i) => s + i.product.price * i.quantity, 0),
           deliveryType: deliveryTypes[storeId] ?? "delivery",
           deliveryFee: store?.deliveryFee ?? 0,
+          paymentMethod: paymentMethods[storeId] ?? "bank_transfer",
+          orderTotal: groupItems.reduce((s, i) => s + i.product.price * i.quantity, 0) + (store?.deliveryFee ?? 0),
         };
       })
       .filter((g): g is typeof g & { store: NonNullable<typeof g.store> } => !!g.store);
-  }, [items, deliveryTypes, isPlanCheckout]);
+  }, [checkoutItems, deliveryTypes, isPlanCheckout]);
+
+  const hasDelivery = !isPlanCheckout && groups.some((g) => g.deliveryType === "delivery");
+
+  useEffect(() => {
+    if (!hasDelivery || selectedAddressId) return;
+    const defaultAddr = savedAddresses.find((a) => a.is_default);
+    if (defaultAddr) {
+      setSelectedAddressId(defaultAddr.id);
+      setAddress(defaultAddr.address);
+      setDeliveryLocation(
+        defaultAddr.lat && defaultAddr.lng
+          ? { address: defaultAddr.address, lat: Number(defaultAddr.lat), lng: Number(defaultAddr.lng) }
+          : null,
+      );
+      setBuildingFloor(defaultAddr.building_floor ?? "");
+      setContactName(defaultAddr.contact_name ?? profile?.full_name ?? "");
+      if (defaultAddr.contact_phone && phone === "+967") {
+        setPhone(defaultAddr.contact_phone);
+      }
+    }
+  }, [hasDelivery, savedAddresses, selectedAddressId, profile?.full_name, phone]);
 
   const deliveryTotal = useMemo(
     () => groups.reduce((s, g) => s + (g.deliveryType === "delivery" ? g.deliveryFee : 0), 0),
     [groups],
   );
 
-  const grandTotal = isPlanCheckout ? planPrice : subtotal + deliveryTotal;
+  const grandTotal = isPlanCheckout ? planPrice : checkoutSubtotal + deliveryTotal;
 
   const setDeliveryType = (storeId: string, type: DeliveryType) => {
     setDeliveryTypes((prev) => ({ ...prev, [storeId]: type }));
+    if (type === "pickup") {
+      setPaymentMethods((prev) => ({ ...prev, [storeId]: "bank_transfer" }));
+    }
+  };
+
+  const setPaymentMethod = (storeId: string, method: PaymentMethod) => {
+    setPaymentMethods((prev) => ({ ...prev, [storeId]: method }));
   };
 
   const handlePlaceOrder = async () => {
@@ -110,12 +185,18 @@ export default function CheckoutScreen() {
           subtotalSar: g.subtotal,
           phone,
           address: g.deliveryType === "delivery" ? address : undefined,
+          deliveryLocation: g.deliveryType === "delivery" ? deliveryLocation : undefined,
+          deliveryDetails:
+            g.deliveryType === "delivery"
+              ? { contactName, buildingFloor }
+              : undefined,
           notes,
+          paymentMethod: g.paymentMethod,
         });
         created.push(orderId);
       }
 
-      clearCart();
+      if (!isBuyNow) clearCart();
       router.push({
         pathname: "/order-success",
         params: { ids: created.join(",") },
@@ -132,15 +213,22 @@ export default function CheckoutScreen() {
       <TopBar
         title="Checkout"
         showBack
-        onBack={() => router.push(isPlanCheckout ? "/(tabs)/plans" : "/(tabs)/")}
+        onBack={() => {
+          if (isPlanCheckout) {
+            router.push("/plans");
+          } else {
+            router.back();
+          }
+        }}
         showCart
       />
 
       <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: insets.bottom + 160 },
+          { paddingBottom: spacing.xl },
         ]}
       >
         <Text style={styles.heading}>{t("checkoutTitle")}</Text>
@@ -149,17 +237,17 @@ export default function CheckoutScreen() {
         </Text>
 
         {isPlanCheckout ? (
-          <View style={[styles.card, shadows.card]}>
+          <Card padding="lg" radius="3xl" style={styles.card}>
             <Text style={styles.cardTitle}>
               {plan?.charAt(0).toUpperCase()}
               {plan?.slice(1)} plan
             </Text>
             <Text style={styles.cardPrice}>{formatSAR(planPrice)}</Text>
-          </View>
+          </Card>
         ) : (
           <>
             {groups.map((g) => (
-              <View key={g.store.id} style={[styles.card, shadows.card]}>
+              <Card key={g.store.id} padding="lg" radius="3xl" style={styles.card}>
                 <View style={styles.storeRow}>
                   <View style={styles.storeImageWrap}>
                     <Image
@@ -241,12 +329,67 @@ export default function CheckoutScreen() {
                     {t("deliveryFeeLabel", { fee: formatSAR(g.deliveryFee) })}
                   </Text>
                 )}
-              </View>
+
+                {g.deliveryType === "delivery" && (
+                  <View style={styles.paymentBlock}>
+                    <Text style={styles.paymentLabel}>{t("paymentMethod")}</Text>
+                    <View style={styles.paymentToggle}>
+                      <Pressable
+                        style={[
+                          styles.toggleButton,
+                          g.paymentMethod === "bank_transfer" && styles.toggleButtonActive,
+                          g.orderTotal > cashThreshold && styles.toggleButtonDisabled,
+                        ]}
+                        onPress={() => setPaymentMethod(g.store.id, "bank_transfer")}
+                        disabled={g.orderTotal > cashThreshold}
+                      >
+                        <Text
+                          style={[
+                            styles.toggleText,
+                            g.paymentMethod === "bank_transfer" && styles.toggleTextActive,
+                            g.orderTotal > cashThreshold && styles.toggleTextDisabled,
+                          ]}
+                        >
+                          {t("bankTransfer")}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          styles.toggleButton,
+                          g.paymentMethod === "cash" && styles.toggleButtonActive,
+                          g.orderTotal > cashThreshold && styles.toggleButtonDisabled,
+                        ]}
+                        onPress={() =>
+                          g.orderTotal <= cashThreshold && setPaymentMethod(g.store.id, "cash")
+                        }
+                        disabled={g.orderTotal > cashThreshold}
+                      >
+                        <Text
+                          style={[
+                            styles.toggleText,
+                            g.paymentMethod === "cash" && styles.toggleTextActive,
+                            g.orderTotal > cashThreshold && styles.toggleTextDisabled,
+                          ]}
+                        >
+                          {t("cashOnDelivery")}
+                        </Text>
+                      </Pressable>
+                    </View>
+                    {g.orderTotal > cashThreshold ? (
+                      <Text style={styles.paymentHint}>
+                        {t("codHighValue", { amount: formatSAR(cashThreshold) })}
+                      </Text>
+                    ) : g.paymentMethod === "cash" ? (
+                      <Text style={styles.paymentHint}>{t("codHint")}</Text>
+                    ) : null}
+                  </View>
+                )}
+              </Card>
             ))}
           </>
         )}
 
-        <View style={[styles.card, shadows.card]}>
+        <Card padding="lg" radius="3xl" style={styles.card}>
           <Text style={styles.cardTitle}>{t("customerDetails")}</Text>
 
           <Input
@@ -258,16 +401,70 @@ export default function CheckoutScreen() {
           />
 
           {!isPlanCheckout && groups.some((g) => g.deliveryType === "delivery") && (
-            <Input
-              label={t("addressLabel")}
-              placeholder={t("addressPlaceholder")}
-              value={address}
-              onChangeText={setAddress}
-              multiline
-              numberOfLines={2}
-              textAlignVertical="top"
-              style={styles.textArea}
-            />
+            <View style={styles.addressBlock}>
+              {savedAddresses.length > 0 && (
+                <View style={styles.savedAddresses}>
+                  <Text style={styles.savedAddressesTitle}>{t("myAddresses")}</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={styles.addressChips}>
+                      {savedAddresses.map((addr) => (
+                        <Pressable
+                          key={addr.id}
+                          onPress={() => {
+                            setSelectedAddressId(addr.id);
+                            setAddress(addr.address);
+                            setDeliveryLocation(
+                              addr.lat && addr.lng
+                                ? { address: addr.address, lat: Number(addr.lat), lng: Number(addr.lng) }
+                                : null,
+                            );
+                            setBuildingFloor(addr.building_floor ?? "");
+                            setContactName(addr.contact_name ?? profile?.full_name ?? "");
+                            if (addr.contact_phone) setPhone(addr.contact_phone);
+                          }}
+                          style={[
+                            styles.addressChip,
+                            selectedAddressId === addr.id && styles.addressChipActive,
+                          ]}
+                          accessibilityRole="button"
+                        >
+                          <Text
+                            style={[
+                              styles.addressChipText,
+                              selectedAddressId === addr.id && styles.addressChipTextActive,
+                            ]}
+                          >
+                            {addr.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+              )}
+              <AddressAutocomplete
+                label={t("addressLabel")}
+                placeholder={t("addressPlaceholder")}
+                address={address}
+                location={deliveryLocation}
+                onChange={(addr, loc) => {
+                  setAddress(addr);
+                  setDeliveryLocation(loc);
+                }}
+              />
+              <Input
+                label={t("contactNameLabel")}
+                placeholder={t("contactNamePlaceholder")}
+                value={contactName}
+                onChangeText={setContactName}
+              />
+              <Input
+                label={t("buildingFloorLabel")}
+                placeholder={t("buildingFloorPlaceholder")}
+                value={buildingFloor}
+                onChangeText={setBuildingFloor}
+              />
+            </View>
           )}
 
           <Input
@@ -280,12 +477,12 @@ export default function CheckoutScreen() {
             textAlignVertical="top"
             style={styles.textArea}
           />
-        </View>
+        </Card>
 
-        <View style={[styles.card, shadows.card]}>
+        <Card padding="lg" radius="3xl" style={styles.card}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{t("subtotal")}</Text>
-            <Text style={styles.totalValue}>{formatSAR(isPlanCheckout ? planPrice : subtotal)}</Text>
+            <Text style={styles.totalValue}>{formatSAR(isPlanCheckout ? planPrice : checkoutSubtotal)}</Text>
           </View>
           {!isPlanCheckout && (
             <View style={styles.totalRow}>
@@ -297,13 +494,13 @@ export default function CheckoutScreen() {
             <Text style={styles.grandTotalLabel}>{t("total")}</Text>
             <Text style={styles.grandTotalValue}>{formatSAR(grandTotal)}</Text>
           </View>
-        </View>
+        </Card>
       </ScrollView>
 
       <View
         style={[
           styles.footer,
-          { paddingBottom: Math.max(insets.bottom + 80, 100) },
+          { paddingBottom: Math.max(insets.bottom, spacing.md) },
         ]}
       >
         <View style={styles.footerTotal}>
@@ -349,13 +546,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   card: {
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    borderRadius: radii["3xl"],
-    padding: spacing.lg,
     gap: spacing.sm,
     marginTop: spacing.lg,
+    // Container styling is handled by Card.
   },
   cardTitle: {
     fontFamily: fonts.display,
@@ -471,8 +664,71 @@ const styles = StyleSheet.create({
     color: palette.success,
     marginTop: spacing.xs,
   },
+  paymentBlock: {
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  paymentLabel: {
+    fontFamily: fonts.sansSemiBold,
+    fontSize: 13,
+    color: palette.foreground,
+  },
+  paymentToggle: {
+    flexDirection: "row",
+    gap: spacing.xs,
+    backgroundColor: palette.surface,
+    borderRadius: radii.lg,
+    padding: 4,
+  },
+  paymentHint: {
+    fontFamily: fonts.sans,
+    fontSize: 11,
+    color: palette.mutedForeground,
+  },
+  toggleButtonDisabled: {
+    opacity: 0.5,
+  },
+  toggleTextDisabled: {
+    color: palette.mutedForeground,
+  },
   textArea: {
     minHeight: 70,
+  },
+  addressBlock: {
+    gap: spacing.md,
+  },
+  savedAddresses: {
+    gap: spacing.sm,
+  },
+  savedAddressesTitle: {
+    fontFamily: fonts.sansSemiBold,
+    fontSize: 13,
+    color: palette.foreground,
+  },
+  addressChips: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+  },
+  addressChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: palette.background,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  addressChipActive: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
+  },
+  addressChipText: {
+    fontFamily: fonts.sansMedium,
+    fontSize: 12,
+    color: palette.foreground,
+  },
+  addressChipTextActive: {
+    color: palette.primaryForeground,
   },
   totalRow: {
     flexDirection: "row",
@@ -505,11 +761,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: palette.primary,
   },
+  scrollView: {
+    flex: 1,
+  },
   footer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: palette.card,
     borderTopWidth: 1,
     borderTopColor: palette.border,

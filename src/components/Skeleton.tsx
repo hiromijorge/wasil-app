@@ -1,27 +1,28 @@
 import { View, StyleSheet } from "react-native";
+import { Card } from "./Card";
 import { palette, spacing, radii } from "../lib/theme";
 
 export function StoreCardSkeleton() {
   return (
-    <View style={styles.storeCard}>
+    <Card radius="3xl" overflowHidden style={styles.storeCard}>
       <View style={styles.storeImage} />
       <View style={styles.storeBody}>
         <View style={[styles.line, { width: "60%" }]} />
         <View style={[styles.line, { width: "40%", marginTop: spacing.sm }]} />
       </View>
-    </View>
+    </Card>
   );
 }
 
 export function ProductCardSkeleton() {
   return (
-    <View style={styles.productCard}>
+    <Card radius="2xl" overflowHidden style={styles.productCard}>
       <View style={styles.productImage} />
       <View style={styles.productBody}>
         <View style={[styles.line, { width: "80%" }]} />
         <View style={[styles.line, { width: "50%", marginTop: spacing.sm }]} />
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -47,11 +48,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   storeCard: {
-    backgroundColor: palette.card,
-    borderRadius: radii["3xl"],
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    overflow: "hidden",
+    // Container styling is handled by Card.
   },
   storeImage: {
     aspectRatio: 5 / 3,
@@ -63,11 +60,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   productCard: {
-    backgroundColor: palette.card,
-    borderRadius: radii["3xl"],
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    overflow: "hidden",
+    // Container styling is handled by Card.
   },
   productImage: {
     aspectRatio: 1,

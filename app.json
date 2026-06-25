@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.wasil.yemen",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#005b57",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -30,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-"backgroundColor": "#005b57",
+          "backgroundColor": "#005b57",
           "image": "./assets/splash-icon.png",
           "imageWidth": 200
         }
@@ -41,6 +42,15 @@
           "style": "auto"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "expo-status-bar": {
+        "style": "auto"
+      },
+      "eas": {
+        "projectId": "873b999f-5d79-48c4-9bdc-80e01e2c301c"
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ export type Product = {
   description?: string;
   image: any; // RN image source
   imageName: string;
+  isDemo?: boolean;
 };
 
 export type Store = {
@@ -26,6 +27,7 @@ export type Store = {
   accent: string;
   rating: number;
   reviews: number;
+  isDemo?: boolean;
   lat: number;
   lng: number;
   deliveryRadiusKm: number;

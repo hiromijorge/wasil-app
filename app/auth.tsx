@@ -16,6 +16,7 @@ import { Phone, Mail, Lock, User, Gift } from "lucide-react-native";
 import { Input } from "../src/components/Input";
 import { Button } from "../src/components/Button";
 import { useAuth } from "../src/lib/auth-context";
+import { useTranslation } from "../src/lib/i18n";
 import { palette, fonts, spacing, radii, shadows } from "../src/lib/theme";
 import type { Database } from "../src/lib/database.types";
 
@@ -65,14 +66,24 @@ const ROLE_LABELS: Record<Role, string> = {
 
 export default function AuthScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const rawParams = useLocalSearchParams();
   const { role: rawRole } = paramsSchema.parse(rawParams);
   const role = rawRole as Role;
 
-  const { signIn, signUp, loading: authLoading, enableDemo } = useAuth();
+  const {
+    signIn,
+    signUp,
+    sendPhoneOtp,
+    verifyPhoneOtp,
+    loading: authLoading,
+  } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState<string | null>(null);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
 
   const {
     control,
@@ -99,6 +110,28 @@ export default function AuthScreen() {
     setSignUpSuccess(null);
 
     if (mode === "signin") {
+      if (values.method === "phone" && !otpSent) {
+        setOtpLoading(true);
+        const { error } = await sendPhoneOtp(values.value);
+        setOtpLoading(false);
+        if (error) {
+          setSubmitError(error.message);
+          return;
+        }
+        setOtpSent(true);
+        return;
+      }
+      if (values.method === "phone" && otpSent) {
+        setOtpLoading(true);
+        const { error } = await verifyPhoneOtp(values.value, otpCode);
+        setOtpLoading(false);
+        if (error) {
+          setSubmitError(error.message);
+          return;
+        }
+        router.replace("/");
+        return;
+      }
       const { error } = await signIn({
         method: values.method,
         value: values.value,
@@ -126,28 +159,43 @@ export default function AuthScreen() {
         setSubmitError(error.message);
         return;
       }
-      setMode("signin");
       reset();
-      setSignUpSuccess(
-        values.method === "email"
-          ? "Account created. Please confirm your email before signing in."
-          : "Account created. Please verify the OTP sent to your phone.",
-      );
+      if (values.method === "email") {
+        router.push({ pathname: "/verify-email", params: { email: values.value } });
+      } else {
+        setMode("signin");
+        setSignUpSuccess("Account created. Please verify the OTP sent to your phone.");
+      }
     }
   };
 
-  const isLoading = isSubmitting || authLoading;
+  const isLoading = isSubmitting || authLoading || otpLoading;
 
-  const handleDemo = (demoRole: Role) => {
-    enableDemo(demoRole);
-    if (demoRole === "merchant") {
-      router.replace("/merchant-dashboard");
-    } else if (demoRole === "admin") {
-      router.replace("/admin-dashboard");
-    } else if (demoRole === "driver") {
-      router.replace("/driver-dashboard");
-    } else if (demoRole === "partner") {
+  const PARTNER_TEST_ACCOUNTS: { role: Role; label: string; email: string }[] = [
+    { role: "customer", label: "Test Customer", email: "partner-customer@wasil.ye" },
+    { role: "merchant", label: "Test Merchant", email: "partner-merchant@wasil.ye" },
+    { role: "admin", label: "Test Admin", email: "partner-admin@wasil.ye" },
+    { role: "driver", label: "Test Driver", email: "partner-driver@wasil.ye" },
+    { role: "partner", label: "Test Partner", email: "partner-partner@wasil.ye" },
+  ];
+  const PARTNER_TEST_PASSWORD = "wasilpartner2025";
+
+  const handlePartnerTestSignIn = async (role: Role, email: string) => {
+    setSubmitError(null);
+    setSignUpSuccess(null);
+    const { error } = await signIn({ method: "email", value: email, password: PARTNER_TEST_PASSWORD });
+    if (error) {
+      setSubmitError(error.message);
+      return;
+    }
+    if (role === "partner") {
       router.replace("/partner-dashboard");
+    } else if (role === "admin") {
+      router.replace("/admin-dashboard");
+    } else if (role === "merchant") {
+      router.replace("/merchant-dashboard");
+    } else if (role === "driver") {
+      router.replace("/dashboard");
     } else {
       router.replace("/(tabs)");
     }
@@ -192,6 +240,8 @@ export default function AuthScreen() {
                 setValue("method", "phone");
                 setSignUpSuccess(null);
                 setSubmitError(null);
+                setOtpSent(false);
+                setOtpCode("");
               }}
             >
               <Phone
@@ -213,6 +263,8 @@ export default function AuthScreen() {
                 setValue("method", "email");
                 setSignUpSuccess(null);
                 setSubmitError(null);
+                setOtpSent(false);
+                setOtpCode("");
               }}
             >
               <Mail
@@ -272,22 +324,36 @@ export default function AuthScreen() {
             )}
           />
 
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, value, onBlur } }) => (
-              <Input
-                label="Password"
-                placeholder="••••••••"
-                secureTextEntry
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                icon={<Lock size={18} color={palette.mutedForeground} />}
-                error={errors.password?.message}
-              />
-            )}
-          />
+          {!(mode === "signin" && watchedMethod === "phone" && otpSent) && (
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value, onBlur } }) => (
+                <Input
+                  label={mode === "signin" && watchedMethod === "phone" && !otpSent ? "Password or OTP" : "Password"}
+                  placeholder="••••••••"
+                  secureTextEntry
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  icon={<Lock size={18} color={palette.mutedForeground} />}
+                  error={errors.password?.message}
+                />
+              )}
+            />
+          )}
+
+          {mode === "signin" && watchedMethod === "phone" && otpSent && (
+            <Input
+              label="OTP code"
+              placeholder="123456"
+              value={otpCode}
+              onChangeText={setOtpCode}
+              keyboardType="number-pad"
+              maxLength={6}
+              icon={<Lock size={18} color={palette.mutedForeground} />}
+            />
+          )}
 
           {mode === "signup" && role === "merchant" && (
             <Controller
@@ -310,19 +376,39 @@ export default function AuthScreen() {
           {signUpSuccess && <Text style={styles.submitSuccess}>{signUpSuccess}</Text>}
 
           <Button
-            title={mode === "signin" ? "Sign in" : "Create account"}
+            title={
+              mode === "signin" && watchedMethod === "phone" && !otpSent
+                ? "Send OTP"
+                : mode === "signin" && watchedMethod === "phone" && otpSent
+                  ? "Verify OTP"
+                  : mode === "signin"
+                    ? "Sign in"
+                    : "Create account"
+            }
             variant="primary"
             size="lg"
-            loading={isLoading}
+            loading={isLoading || otpLoading}
             onPress={handleSubmit(onSubmit)}
             style={styles.submitButton}
           />
+
+          {mode === "signin" && watchedMethod === "email" && (
+            <Pressable
+              onPress={() => router.push("/reset-password")}
+              style={styles.forgotRow}
+              accessibilityRole="button"
+            >
+              <Text style={styles.forgotText}>{t("forgotPassword")}</Text>
+            </Pressable>
+          )}
 
           <Pressable
             onPress={() => {
               setMode(mode === "signin" ? "signup" : "signin");
               setSubmitError(null);
               setSignUpSuccess(null);
+              setOtpSent(false);
+              setOtpCode("");
               reset();
             }}
             style={styles.switchRow}
@@ -338,38 +424,17 @@ export default function AuthScreen() {
           </Pressable>
 
           <View style={styles.demoSection}>
-            <Text style={styles.demoTitle}>Demo login</Text>
+            <Text style={styles.demoTitle}>Partner test login</Text>
             <View style={styles.demoGrid}>
-              <Button
-                title="Demo Customer"
-                variant="outline"
-                size="sm"
-                onPress={() => handleDemo("customer")}
-              />
-              <Button
-                title="Demo Merchant"
-                variant="outline"
-                size="sm"
-                onPress={() => handleDemo("merchant")}
-              />
-              <Button
-                title="Demo Admin"
-                variant="outline"
-                size="sm"
-                onPress={() => handleDemo("admin")}
-              />
-              <Button
-                title="Demo Driver"
-                variant="outline"
-                size="sm"
-                onPress={() => handleDemo("driver")}
-              />
-              <Button
-                title="Demo Partner"
-                variant="outline"
-                size="sm"
-                onPress={() => handleDemo("partner")}
-              />
+              {PARTNER_TEST_ACCOUNTS.map((account) => (
+                <Button
+                  key={account.role}
+                  title={account.label}
+                  variant="outline"
+                  size="sm"
+                  onPress={() => handlePartnerTestSignIn(account.role, account.email)}
+                />
+              ))}
             </View>
           </View>
         </View>
@@ -426,7 +491,7 @@ const styles = StyleSheet.create({
     borderRadius: radii["2xl"],
     padding: spacing.xl,
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: `${palette.border}80`,
     ...shadows.card,
   },
   overline: {
@@ -493,6 +558,15 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.sm,
+  },
+  forgotRow: {
+    marginTop: spacing.md,
+    alignSelf: "flex-end",
+  },
+  forgotText: {
+    fontFamily: fonts.sansSemiBold,
+    fontSize: 13,
+    color: palette.primary,
   },
   switchRow: {
     marginTop: spacing.lg,

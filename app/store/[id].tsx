@@ -9,8 +9,9 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MessageCircle, ChevronLeft, RotateCcw } from "lucide-react-native";
+import { MessageCircle, RotateCcw } from "lucide-react-native";
 import { TopBar } from "../../src/components/TopBar";
+import { Card } from "../../src/components/Card";
 import { ProductCard } from "../../src/components/ProductCard";
 import { ProductCardSkeleton } from "../../src/components/Skeleton";
 import { palette, fonts, spacing, radii, shadows } from "../../src/lib/theme";
@@ -80,7 +81,7 @@ export default function StoreDetailScreen() {
         </View>
 
         <View style={styles.content}>
-          <View style={[styles.headerCard, shadows.lift]}>
+          <Card padding="lg" radius="3xl" shadow="lift" style={styles.headerCard}>
             <View style={styles.badgeRow}>
               <View style={styles.categoryBadge}>
                 <Text style={styles.categoryText}>
@@ -118,7 +119,7 @@ export default function StoreDetailScreen() {
               <MessageCircle size={18} color={palette.primaryForeground} />
               <Text style={styles.messageButtonText}>{t("messageSeller")}</Text>
             </Pressable>
-          </View>
+          </Card>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -151,13 +152,6 @@ export default function StoreDetailScreen() {
             </View>
           </View>
 
-          <Pressable
-            style={styles.backLink}
-            onPress={() => router.push("/(tabs)/")}
-          >
-            <ChevronLeft size={14} color={palette.primary} />
-            <Text style={styles.backLinkText}>{t("backToHome")}</Text>
-          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -195,12 +189,8 @@ const styles = StyleSheet.create({
     marginTop: -48,
   },
   headerCard: {
-    backgroundColor: palette.card,
-    borderRadius: radii["3xl"],
-    borderWidth: 1,
-    borderColor: `${palette.border}80`,
-    padding: spacing.lg,
     gap: spacing.sm,
+    // Container styling is handled by Card.
   },
   badgeRow: {
     flexDirection: "row",
@@ -317,18 +307,6 @@ const styles = StyleSheet.create({
   productGridItem: {
     width: "47%",
   },
-  backLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-  backLinkText: {
-    fontFamily: fonts.sansSemiBold,
-    fontSize: 13,
-    color: palette.primary,
-  },
   errorRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -339,5 +317,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sansMedium,
     fontSize: 13,
     color: palette.destructive,
+  },
+  backLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  backLinkText: {
+    fontFamily: fonts.sansSemiBold,
+    fontSize: 13,
+    color: palette.primary,
   },
 });
