@@ -180,7 +180,7 @@ export default function ProfileScreen() {
           {
             icon: Store,
             label: t("merchantDashboard"),
-            onPress: () => router.push("/dashboard"),
+            onPress: () => router.push("/merchant-dashboard"),
           },
         ]
       : []),

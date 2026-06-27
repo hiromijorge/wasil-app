@@ -113,7 +113,7 @@ export function MerchantShell({ children, floatingAction }: MerchantShellProps) 
                 </Text>
                 <Text
                   style={styles.restrictionLink}
-                  onPress={() => router.push("/account/billing")}
+                  onPress={() => router.push("/merchant-account/billing")}
                 >
                   {t("payNow")}
                 </Text>

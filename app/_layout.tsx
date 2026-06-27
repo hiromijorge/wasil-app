@@ -13,7 +13,10 @@ import {
   PlusJakartaSans_700Bold,
   PlusJakartaSans_800ExtraBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
-import { Tajawal_400Regular, Tajawal_700Bold } from "@expo-google-fonts/tajawal";
+import {
+  Tajawal_400Regular,
+  Tajawal_700Bold,
+} from "@expo-google-fonts/tajawal";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { View, Text, StyleSheet } from "react-native";
@@ -74,40 +77,41 @@ export default function RootLayout() {
           <AuthProvider>
             <CartProvider>
               <View style={styles.root}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: {
-                    backgroundColor: palette.background,
-                  },
-                }}
-              >
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="store/[id]" />
-                <Stack.Screen name="product/[id]" />
-                <Stack.Screen name="chat/[storeId]" />
-                <Stack.Screen name="checkout" />
-                <Stack.Screen name="order-success" />
-                <Stack.Screen name="send" />
-                <Stack.Screen name="parcel-success" />
-                <Stack.Screen name="auth" />
-                <Stack.Screen name="(merchant)" />
-                <Stack.Screen name="(driver)" />
-                <Stack.Screen name="(partner)" />
-                <Stack.Screen name="(admin)" />
-                <Stack.Screen name="merchant-onboarding" />
-                <Stack.Screen name="merchant-chat/[customerId]" />
-                <Stack.Screen name="addresses" />
-                <Stack.Screen name="reset-password" />
-                <Stack.Screen name="verify-email" />
-                <Stack.Screen name="privacy-policy" />
-                <Stack.Screen name="terms-of-service" />
-              </Stack>
-              <CartDrawer />
-              <NotificationListener />
-              <StatusBar style="auto" />
-            </View>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: {
+                      backgroundColor: palette.background,
+                    },
+                  }}
+                >
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="store/[id]" />
+                  <Stack.Screen name="product/[id]" />
+                  <Stack.Screen name="chat/[storeId]" />
+                  <Stack.Screen name="checkout" />
+                  <Stack.Screen name="order-success" />
+                  <Stack.Screen name="send" />
+                  <Stack.Screen name="parcel-success" />
+                  <Stack.Screen name="auth" />
+                  <Stack.Screen name="(merchant)" />
+                  <Stack.Screen name="(driver)" />
+                  <Stack.Screen name="(partner)" />
+                  <Stack.Screen name="(admin)" />
+                  <Stack.Screen name="dashboard" />
+                  <Stack.Screen name="merchant-onboarding" />
+                  <Stack.Screen name="merchant-chat/[customerId]" />
+                  <Stack.Screen name="addresses" />
+                  <Stack.Screen name="reset-password" />
+                  <Stack.Screen name="verify-email" />
+                  <Stack.Screen name="privacy-policy" />
+                  <Stack.Screen name="terms-of-service" />
+                </Stack>
+                <CartDrawer />
+                <NotificationListener />
+                <StatusBar style="auto" />
+              </View>
             </CartProvider>
           </AuthProvider>
         </LangProvider>

@@ -52,7 +52,7 @@ function MerchantOnboardingScreen() {
         .limit(1)
         .single();
       if (data) {
-        router.replace("/dashboard");
+        router.replace("/merchant-dashboard");
       } else {
         setChecking(false);
       }
@@ -99,7 +99,7 @@ function MerchantOnboardingScreen() {
       });
 
       if (error) throw error;
-      router.replace("/dashboard");
+      router.replace("/merchant-dashboard");
     } catch (err) {
       Alert.alert(t("tryAgain"), err instanceof Error ? err.message : String(err));
     } finally {

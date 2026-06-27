@@ -258,7 +258,7 @@ export default function HomeScreen() {
               <View style={styles.merchantActions}>
                 <Pressable
                   style={styles.merchantPrimary}
-                  onPress={() => router.push("/dashboard")}
+                  onPress={() => router.push("/merchant-dashboard")}
                 >
                   <Text style={styles.merchantPrimaryText}>{t("openDashboard")}</Text>
                 </Pressable>

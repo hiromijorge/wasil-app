@@ -10,8 +10,8 @@ type Role = Database["public"]["Tables"]["profiles"]["Row"]["role"];
 
 const ROLE_HOME: Record<Role, string> = {
   customer: "/(tabs)",
-  merchant: "/dashboard",
-  driver: "/dashboard",
+  merchant: "/merchant-dashboard",
+  driver: "/driver-dashboard",
   partner: "/partner-dashboard",
   admin: "/admin-dashboard",
 };

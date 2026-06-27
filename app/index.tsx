@@ -21,7 +21,7 @@ export default function IndexRedirect() {
     } else if (role === "admin") {
       router.replace("/admin-dashboard");
     } else if (role === "driver") {
-      router.replace("/dashboard");
+      router.replace("/driver-dashboard");
     } else {
       router.replace("/(tabs)");
     }

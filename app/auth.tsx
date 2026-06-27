@@ -195,7 +195,7 @@ export default function AuthScreen() {
     } else if (role === "merchant") {
       router.replace("/merchant-dashboard");
     } else if (role === "driver") {
-      router.replace("/dashboard");
+      router.replace("/driver-dashboard");
     } else {
       router.replace("/(tabs)");
     }

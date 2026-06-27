@@ -151,7 +151,7 @@ export function TopBar({
               </Pressable>
               <Pressable
                 style={styles.merchantButton}
-                onPress={() => router.push("/dashboard")}
+                onPress={() => router.push("/merchant-dashboard")}
               >
                 <Text style={styles.merchantButtonText}>{t("forMerchants")} →</Text>
               </Pressable>
@@ -175,7 +175,7 @@ export function TopBar({
               {showCart && (
                 <Pressable
                   style={styles.cartButton}
-                  onPress={() => (openCart ? openCart() : router.push("/(tabs)/cart"))}
+                  onPress={() => openCart?.()}
                   hitSlop={8}
                 >
                   <ShoppingCart size={18} color={palette.foreground} />

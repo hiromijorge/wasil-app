@@ -121,7 +121,7 @@ export default function ProductDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: spacing.xl },
+          { paddingBottom: spacing.xxxl },
         ]}
       >
         <View style={styles.columns}>
@@ -229,7 +229,7 @@ export default function ProductDetailScreen() {
       <View
         style={[
           styles.footer,
-          { paddingBottom: Math.max(insets.bottom, spacing.md) },
+          { paddingBottom: Math.max(insets.bottom, spacing.xl) + spacing.sm },
         ]}
       >
         <View
